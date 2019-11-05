@@ -12,22 +12,22 @@ import shlex
 import subprocess
 
 REQUIREMENTS = """
-f0cal.bootstrap
 """
 
 CONSTRAINTS = """
-git+https://github.com/f0cal/bootstrap#egg=f0cal.bootstrap
 """
 
-PREINSTALL_LIST = [
-    "git+https://github.com/f0cal/f0cal#subdirectory=plugnparse&egg=plugnparse",
-    "git+https://github.com/f0cal/saltbox#egg=saltbox",
-]
-
 class Installer:
-    def __init__(self):
+
+    PREINSTALL_PKGS = {}
+    PREINSTALL_PKGS['plugnparse'] = "git+https://github.com/f0cal/f0cal#subdirectory=plugnparse&egg=plugnparse"
+    PREINSTALL_PKGS['saltbox'] = "git+https://github.com/f0cal/saltbox#egg=saltbox"
+    PREINSTALL_PKGS['f0cal.bootstrap'] = "git+https://github.com/f0cal/bootstrap#egg=f0cal.bootstrap"
+
+    def __init__(self, clean_up=False):
         self._tempdir = tempfile.TemporaryDirectory()
         self._create_venv()
+        self._clean_up = clean_up
 
     @property
     def path(self):
@@ -44,6 +44,8 @@ class Installer:
         return self
 
     def __exit__(self, *args, **dargs):
+        if not self._clean_up:
+            return None
         return self._tempdir.__exit__(*args, **dargs)
 
     @staticmethod
@@ -102,21 +104,40 @@ class Installer:
         subprocess.check_call(shlex.split(cmd_str))
 
     def preinstall(self):
-        requirements_path = os.path.join(self.path, 'requirements.txt')
-        open(requirements_path, 'w').write(REQUIREMENTS)
-        constraints_path = os.path.join(self.path , 'constraints.txt')
-        open(constraints_path, 'w').write(CONSTRAINTS)
         self._run_exe(f"{self.path}/bin/pip install --upgrade pip")
-        for pkg_str in PREINSTALL_LIST:
+        for pkg_str in self.PREINSTALL_PKGS.values():
             self._run_exe(f"{self.path}/bin/pip install {pkg_str}")
-        self._run_exe(f"{self.path}/bin/pip install -r {requirements_path} -c {constraints_path}")
+        if REQUIREMENTS:
+            requirements_path = os.path.join(self.path, 'requirements.txt')
+            open(requirements_path, 'w').write(REQUIREMENTS)
+        if CONSTRAINTS:
+            constraints_path = os.path.join(self.path , 'constraints.txt')
+            open(constraints_path, 'w').write(CONSTRAINTS)
+        if REQUIREMENTS or CONSTRAINTS:
+            self._run_exe(f"{self.path}/bin/pip install -r {requirements_path} -c {constraints_path}")
+
+def scrub_url(url):
+    if ":" not in url:
+        url = os.path.abspath(url)
+        assert os.path.exists(url)
+        assert os.path.isdir(url)
+        return url
+    return url
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('recipe')
+    parser.add_argument('--clean-up', default=True, action='store_false')
+    parser.add_argument('--saltbox-repo', default=None)
+    parser.add_argument('--bootstrap-repo', default=None)
     ns = parser.parse_args()
 
-    with Installer() as installer:
+    if ns.saltbox_repo:
+        Installer.PREINSTALL_PKGS['saltbox'] = scrub_url(ns.saltbox_repo)
+    if ns.bootstrap_repo:
+        Installer.PREINSTALL_PKGS['f0cal.bootstrap'] = scrub_url(ns.bootstrap_repo)
+
+    with Installer(clean_up=ns.clean_up) as installer:
         installer.preinstall()
         installer.activate_venv()
         import saltbox
