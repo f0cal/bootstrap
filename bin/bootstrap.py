@@ -113,12 +113,17 @@ class Installer:
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('recipe')
     ns = parser.parse_args()
 
     with Installer() as installer:
         installer.preinstall()
         installer.activate_venv()
         import saltbox
+        config = saltbox.SaltBoxConfig.from_env(block=False)
+        with saltbox.SaltBox.executor_factory(config) as api:
+            cmd = ["salt-run", "state.orchestrate", ns.recipe, "saltenv=bootstrap"]
+            return api.execute(*cmd, "pillar={}")
 
 if __name__ == '__main__':
     main()
