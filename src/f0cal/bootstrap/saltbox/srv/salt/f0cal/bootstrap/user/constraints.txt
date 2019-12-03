@@ -1,0 +1,10 @@
+{% set contents = salt['pillar.get']("cli:constraints", None) %}
+{% if contents %}
+{{ contents }}
+{% else %}
+git+https://github.com/f0cal/farm#egg=f0cal.farm.client
+git+https://github.com/f0cal/my-device#egg=f0cal.my-device
+git+https://github.com/f0cal/my-code#egg=f0cal.my-code
+git+https://github.com/f0cal/core#subdirectory=f0cal&egg=f0cal
+git+https://github.com/f0cal/core#subdirectory=plugnparse&egg=plugnparse
+{% endif %}
