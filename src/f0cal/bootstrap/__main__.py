@@ -149,7 +149,7 @@ def install(
         kwargs["contraints"] = constraints_file.read()
     kwargs["cwd"] = os.getcwd()
 
-    state_kwargs = dict(k.split("=") for k in kwargs.pop("state_kwarg", []))
+    state_kwargs = dict(k.split("=") for k in kwargs.pop("state_kwarg", None) or [])
     kwargs.update(state_kwargs)
 
     run_state = run_state or "user"

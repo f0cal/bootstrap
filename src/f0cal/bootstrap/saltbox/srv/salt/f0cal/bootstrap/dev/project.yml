@@ -18,8 +18,11 @@ repos:
   - name: core
     url: https://github.com/f0cal/core
 
-  - name: farm-client
-    url: https://github.com/f0cal/f0cal.farm.client
+  - name: saltbox
+    url: https://github.com/f0cal/saltbox
+
+  - name: salt
+    url: https://github/com/f0cal/salt
 
 eggs:
   - repo: my-device
@@ -32,7 +35,7 @@ eggs:
     url: https://github.com/f0cal/farm
     name: f0cal.farm
 
-  - repo: farm-api
+  - repo: farm-svc
     name: f0cal.service.device_farm
     subdir: device_farm
 
@@ -44,8 +47,11 @@ eggs:
     name: plugnparse
     subdir: plugnparse
 
-  - repo: farm-client
-    name: f0cal.farm.client
+  - repo: saltbox
+    name: saltbox
+
+  - repo: salt
+    name: salt
 
 tests_default:
   run: python setup.py test
