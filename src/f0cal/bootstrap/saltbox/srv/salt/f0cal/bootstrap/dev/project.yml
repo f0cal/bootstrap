@@ -1,0 +1,53 @@
+repos_default:
+  branch: dev
+  lang: py3
+
+repos:
+  - name: my-device
+    url: https://github.com/f0cal/my-device
+
+  - name: my-code
+    url: https://github.com/f0cal/my-code
+
+  - name: farm
+    url: https://github.com/f0cal/farm
+
+  - name: farm-api
+    url: https://github.com/f0cal/device-farm
+
+  - name: core
+    url: https://github.com/f0cal/core
+
+  - name: farm-client
+    url: https://github.com/f0cal/f0cal.farm.client
+
+eggs:
+  - repo: my-device
+    name: f0cal.my-device
+
+  - repo: my-code
+    name: f0cal.my-code
+
+  - repo: farm
+    url: https://github.com/f0cal/farm
+    name: f0cal.farm
+
+  - repo: farm-api
+    name: f0cal.service.device_farm
+    subdir: device_farm
+
+  - repo: core
+    name: f0cal
+    subdir: f0cal
+
+  - repo: core
+    name: plugnparse
+    subdir: plugnparse
+
+  - repo: farm-client
+    name: f0cal.farm.client
+
+tests_default:
+  run: python setup.py test
+
+tests: []

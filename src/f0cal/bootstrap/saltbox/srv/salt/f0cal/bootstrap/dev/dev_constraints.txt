@@ -1,0 +1,17 @@
+{% set code_dir = pillar['cli']['code_dir'] %}
+{% set project_yml = "%s/project.yml" | format(code_dir) %}
+{% set project = salt["file.read"](project_yml) | load_yaml %}
+
+{% set defaults = project.repos_default %}
+
+{% for egg in project.eggs %}
+{% set name = egg.name %}
+{% set repo = egg.repo %}
+{% set subdir = "" %}
+{% if egg.get("subdir", None ) %}
+{% set subdir = "&subdirectory=%s" | format(egg.subdir) %}
+{% endif %}
+
+-e file://{{ code_dir }}/{{ egg.repo }}#egg={{ egg.name }}{{ subdir }}
+
+{% endfor %}

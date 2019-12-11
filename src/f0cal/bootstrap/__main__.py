@@ -1,25 +1,30 @@
 #! /usr/bin/env python3
 
-import sys
-import site
-import os
-import venv
 import argparse
-import tempfile
-import shlex
-import subprocess
-import shutil
 import json
+import os
+import shlex
+import shutil
+import site
+import subprocess
+import sys
+import tempfile
+import venv
+
 
 class Installer:
 
     REQUIREMENTS = {}
-    REQUIREMENTS['f0cal.bootstrap'] = "f0cal.bootstrap"
+    REQUIREMENTS["f0cal.bootstrap"] = "f0cal.bootstrap"
 
     CONSTRAINTS = {}
-    CONSTRAINTS['plugnparse'] = "git+https://github.com/f0cal/core#subdirectory=plugnparse&egg=plugnparse"
-    CONSTRAINTS['saltbox'] = "git+https://github.com/f0cal/saltbox#egg=saltbox"
-    CONSTRAINTS['f0cal.bootstrap'] = "git+https://github.com/f0cal/bootstrap#egg=f0cal.bootstrap"
+    CONSTRAINTS[
+        "plugnparse"
+    ] = "git+https://github.com/f0cal/core#subdirectory=plugnparse&egg=plugnparse"
+    CONSTRAINTS["saltbox"] = "git+https://github.com/f0cal/saltbox#egg=saltbox"
+    CONSTRAINTS[
+        "f0cal.bootstrap"
+    ] = "git+https://github.com/f0cal/bootstrap#egg=f0cal.bootstrap"
 
     TMP_PREFIX = "f0cal-bootstrap-"
 
@@ -102,17 +107,20 @@ class Installer:
         subprocess.check_call(shlex.split(cmd_str))
 
     def _render_file(self, path, _list):
-        with open(path, 'w') as _file:
+        with open(path, "w") as _file:
             contents = "\n".join(_list)
             _file.write(contents)
 
     def preinstall(self):
         self._run_exe(f"{self.path}/bin/pip install --upgrade pip")
-        requirements_path = os.path.join(self.path, 'requirements.txt')
+        requirements_path = os.path.join(self.path, "requirements.txt")
         self._render_file(requirements_path, self.REQUIREMENTS.values())
-        constraints_path = os.path.join(self.path , 'constraints.txt')
+        constraints_path = os.path.join(self.path, "constraints.txt")
         self._render_file(constraints_path, self.CONSTRAINTS.values())
-        self._run_exe(f"{self.path}/bin/pip install -r {requirements_path} -c {constraints_path}")
+        self._run_exe(
+            f"{self.path}/bin/pip install -r {requirements_path} -c {constraints_path}"
+        )
+
 
 def scrub_url(url, pkg):
     if ":" not in url:
@@ -122,33 +130,55 @@ def scrub_url(url, pkg):
         return f"-e file://{url}#egg={pkg}"
     return url
 
-def install(run_state=None, temp_dir=None, clean_up=True, saltbox_repo=None,
-            bootstrap_repo=None, log_level=None, salt_repo=None, **kwargs):
+
+def install(
+    run_state=None,
+    temp_dir=None,
+    clean_up=True,
+    saltbox_repo=None,
+    bootstrap_repo=None,
+    log_level=None,
+    salt_repo=None,
+    **kwargs,
+):
 
     if "python" not in kwargs:
         kwargs["python"] = sys.executable
     constraints_file = kwargs.pop("constraints_file", None)
     if constraints_file is not None:
         kwargs["contraints"] = constraints_file.read()
+    kwargs["cwd"] = os.getcwd()
+
+    state_kwargs = dict(k.split("=") for k in kwargs.pop("state_kwarg", []))
+    kwargs.update(state_kwargs)
 
     run_state = run_state or "user"
     pillar = json.dumps(dict(cli=kwargs))
-    cmd = ["salt-run", 'state.orchestrate', run_state, "saltenv=bootstrap", f"pillar={pillar}"]
+    cmd = [
+        "salt-run",
+        "state.orchestrate",
+        run_state,
+        "saltenv=bootstrap",
+        f"pillar={pillar}",
+    ]
     if log_level is not None:
-        cmd += ['--log-level', log_level]
+        cmd += ["--log-level", log_level]
 
     if bootstrap_repo is not None:
-        Installer.CONSTRAINTS['f0cal.bootstrap'] = scrub_url(bootstrap_repo, 'f0cal.bootstrap')
+        Installer.CONSTRAINTS["f0cal.bootstrap"] = scrub_url(
+            bootstrap_repo, "f0cal.bootstrap"
+        )
     if saltbox_repo is not None:
-        Installer.CONSTRAINTS['saltbox'] = scrub_url(saltbox_repo, 'saltbox')
+        Installer.CONSTRAINTS["saltbox"] = scrub_url(saltbox_repo, "saltbox")
     if salt_repo is not None:
-        Installer.CONSTRAINTS['salt'] = scrub_url(salt_repo, 'salt')
+        Installer.CONSTRAINTS["salt"] = scrub_url(salt_repo, "salt")
 
     with Installer(temp_dir=temp_dir, clean_up=clean_up) as installer:
         installer.preinstall()
         installer.activate_venv()
         import saltbox
         import f0cal.bootstrap
+
         config = saltbox.SaltBoxConfig.from_env(use_install_cache=False)
         with saltbox.SaltBox.installer_factory(config) as api:
             api.add_package(f0cal.bootstrap.saltbox_path())
@@ -156,71 +186,80 @@ def install(run_state=None, temp_dir=None, clean_up=True, saltbox_repo=None,
         with saltbox.SaltBox.executor_factory(config) as api:
             return api.execute(*cmd)
 
+
 def main():
-    assert sys.version_info >= (3, 6), "Sorry, this script relies on v3.6+ language features."
+    assert sys.version_info >= (
+        3,
+        6,
+    ), "Sorry, this script relies on v3.6+ language features."
 
     parser = argparse.ArgumentParser()
 
     _descr = """These options control what is installed and where."""
-    install_group = parser.add_argument_group('Install options', description=_descr)
+    install_group = parser.add_argument_group("Install options", description=_descr)
 
-    install_group.add_argument('--venv-dir',
-                               default=None,
-                               help="Filesystem path at which to create a Python3 virtual environement.")
+    install_group.add_argument(
+        "--venv-dir",
+        default=None,
+        help="Filesystem path at which to create a Python3 virtual environement.",
+    )
 
     # install_group.add_argument('--clone-dir', default=None, help="Filesystem path at which to clone f0cal code.")
 
-    install_group.add_argument('--skip',
-                               default=None,
-                               action='append',
-                               choices=["farm", "my-device", "my-code"],
-                               help="Skip an application component. May be used multiple times.")
+    install_group.add_argument(
+        "--skip",
+        default=None,
+        action="append",
+        choices=["farm", "my-device", "my-code"],
+        help="Skip an application component. May be used multiple times.",
+    )
 
     _descr = """ADVANCED. These are for power users, and typically only required for debugging."""
-    dev_group = parser.add_argument_group('Developer options', description=_descr)
+    dev_group = parser.add_argument_group("Developer options", description=_descr)
 
-    dev_group.add_argument('--temp-dir',
-                           default=None,
-                           help="The temporary directory that this script uses for self-setup." )
-    dev_group.add_argument('--log-level',
-                           default=None,
-                           choices=["DEBUG", "TRACE"])
-    dev_group.add_argument('--no-clean-up',
-                           dest='clean_up',
-                           default=True,
-                           action='store_false',
-                           help="Leave TEMP_DIR for debugging purposes; it is otherwise deleted.")
-    dev_group.add_argument('--constraints-file',
-                           default=None,
-                           type=argparse.FileType('r'),
-                           help="Use a pip constraints file when installing.")
-    dev_group.add_argument('--run-state',
-                           default=None,
-                           help="Run a non-standard salt state.")
-    dev_group.add_argument('--state-kwarg',
-                           default=None,
-                           action='append',
-                           help="Run a non-standard salt state.")
+    dev_group.add_argument(
+        "--temp-dir",
+        default=None,
+        help="The temporary directory that this script uses for self-setup.",
+    )
+    dev_group.add_argument("--log-level", default=None, choices=["DEBUG", "TRACE"])
+    dev_group.add_argument(
+        "--no-clean-up",
+        dest="clean_up",
+        default=True,
+        action="store_false",
+        help="Leave TEMP_DIR for debugging purposes; it is otherwise deleted.",
+    )
+    dev_group.add_argument(
+        "--constraints-file",
+        default=None,
+        type=argparse.FileType("r"),
+        help="Use a pip constraints file when installing.",
+    )
+    dev_group.add_argument(
+        "--run-state", default=None, help="Run a non-standard salt state."
+    )
+    dev_group.add_argument(
+        "--state-kwarg",
+        default=None,
+        action="append",
+        help="Run a non-standard salt state.",
+    )
 
     _descr = """ADVANCED. Use an alternate version of <package> during bootstrap. Accepts
     either a PATH on the local filesystem or PIP_URL. PIP_URL must be propertly
     formatted for consumption by pip. Learn more:
     https://pip.pypa.io/en/stable/reference/pip_install/#examples"""
-    alt_group = parser.add_argument_group('Alternate locations', description=_descr)
+    alt_group = parser.add_argument_group("Alternate locations", description=_descr)
 
-    alt_group.add_argument('--saltbox-repo',
-                           default=None,
-                           help="For bootstrap execution.")
-    alt_group.add_argument('--bootstrap-repo',
-                           default=None,
-                           help="For bootstrap execution.")
-    alt_group.add_argument('--salt-repo',
-                           default=None,
-                           help="For bootstrap execution.")
+    alt_group.add_argument("--saltbox-repo", default=None, help="")
+    alt_group.add_argument("--bootstrap-repo", default=None, help="")
+    alt_group.add_argument("--salt-repo", default=None, help="")
 
     ns = parser.parse_args()
 
     return install(**vars(ns))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

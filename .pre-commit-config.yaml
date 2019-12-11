@@ -1,6 +1,18 @@
 exclude: '^docs/conf.py'
 
 repos:
+
+- repo: https://github.com/ambv/black
+  rev: stable
+  hooks:
+  - id: black
+    language_version: python3.6
+
+-   repo: git://github.com/Lucas-C/pre-commit-hooks-markup
+    rev: v1.0.0
+    hooks:
+    -   id: rst-linter
+
 - repo: git://github.com/pre-commit/pre-commit-hooks
   rev: v2.2.3
   hooks:
