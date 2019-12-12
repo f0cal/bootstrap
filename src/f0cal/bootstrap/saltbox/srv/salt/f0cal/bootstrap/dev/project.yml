@@ -22,7 +22,7 @@ repos:
     url: https://github.com/f0cal/saltbox
 
   - name: salt
-    url: https://github/com/f0cal/salt
+    url: https://github.com/f0cal/salt
 
 eggs:
   - repo: my-device
@@ -33,9 +33,9 @@ eggs:
 
   - repo: farm
     url: https://github.com/f0cal/farm
-    name: f0cal.farm
+    name: f0cal.farm.client
 
-  - repo: farm-svc
+  - repo: farm-api
     name: f0cal.service.device_farm
     subdir: device_farm
 
