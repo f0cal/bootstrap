@@ -200,6 +200,7 @@ def main():
 
     install_group.add_argument(
         "--venv-dir",
+        type=lambda x: os.path.abspath(x),
         default=None,
         help="Filesystem path at which to create a Python3 virtual environement.",
     )
@@ -208,7 +209,7 @@ def main():
 
     install_group.add_argument(
         "--skip",
-        default=None,
+        default=[],
         action="append",
         choices=["farm", "my-device", "my-code"],
         help="Skip an application component. May be used multiple times.",
