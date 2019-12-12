@@ -1,5 +1,4 @@
 {% set venv_dir = salt['pillar.get']("cli:venv_dir", None) %}
-{% set skip_list = salt['pillar.get']("cli:skip", None) %}
 {% set python_exe = salt['pillar.get']("cli:python", None) %}
 {% if venv_dir %}
 {% set temp_dir = "%s/tmp" | format(venv_dir) %}
@@ -11,9 +10,19 @@
 {% set pip_exe = "pip" %}
 
 {% if venv_dir %}
+venv_bin:
+  file.managed:
+    - makedirs: True
+    - name: {{ temp_dir }}/.pyvenv
+    - mode: 777
+    - contents: |
+        #! /bin/bash
+        {{ python_exe}} -m venv $@ && \
 {{ venv_dir }}:
   virtualenv.managed:
-    - python: {{ python_exe }}
+    - venv_bin: {{ temp_dir }}/.pyvenv
+    - require:
+        - file: {{ temp_dir }}/.pyvenv
 {% set pip_exe = "%s/bin/pip" | format(venv_dir) %}
 {% endif %}
 
@@ -32,6 +41,13 @@
 pip_upgrade:
   cmd.run:
     - name: {{ pip_exe }} install --upgrade pip
+pip_prereqs:
+  pip.installed:
+    - bin_env: {{ pip_exe }}
+    - pkgs:
+      - black
+      - pyyaml
+      - jinja2
 
 pip_install:
   cmd.run:
