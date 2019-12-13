@@ -197,7 +197,7 @@ def main():
         print(f"Verifying required apt packages are present:")
         subprocess.check_call(shlex.split(f"dpkg-query -W gcc python3 git python3-dev python3-venv rsync"))
     except (ModuleNotFoundError, subprocess.CalledProcessError) as e:
-        sys.exit("One or more required apt packages not found.")
+        sys.exit("ERROR: One or more required apt packages not found.")
 
     parser = argparse.ArgumentParser()
 
