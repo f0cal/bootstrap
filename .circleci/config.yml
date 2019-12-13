@@ -1,0 +1,20 @@
+version: 2
+jobs:
+  deploy:
+    docker:
+      - image:  google/cloud-sdk
+    steps:
+      - checkout
+      - run: echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+      - run:  gsutil cp $(pwd)/bin/bootstrap.py gs://bootstrap.f0cal.com/${CIRCLE_BRANCH}
+
+workflows:
+  version: 2
+  deploy:
+    jobs:
+      - deploy:
+          filters:
+            branches:
+              only:
+                - master
+                - dev
