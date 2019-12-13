@@ -223,7 +223,7 @@ def main():
         default=None,
         help="The temporary directory that this script uses for self-setup.",
     )
-    dev_group.add_argument("--log-level", default=None, choices=["DEBUG", "TRACE"])
+    dev_group.add_argument("--log-level", default=None, choices=["debug", "trace"])
     dev_group.add_argument(
         "--no-clean-up",
         dest="clean_up",
