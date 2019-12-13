@@ -193,6 +193,13 @@ def main():
         6,
     ), "Sorry, this script relies on v3.6+ language features."
 
+    in_virtualenv = hasattr(sys, 'real_prefix')
+    in_venv = hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix
+    if in_virtualenv or in_venv:
+        print('ERROR: Found active virtualenv or venv. Deactivate before bootstrap, '
+              'since bootstrap creates its own venv.')
+        exit(1)
+
     parser = argparse.ArgumentParser()
 
     _descr = """These options control what is installed and where."""
