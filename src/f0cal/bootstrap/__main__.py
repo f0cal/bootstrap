@@ -200,6 +200,13 @@ def main():
         except (ModuleNotFoundError, subprocess.CalledProcessError) as e:
             sys.exit("ERROR: One or more required apt packages not found.")
 
+    in_virtualenv = hasattr(sys, 'real_prefix')
+    in_venv = hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix
+    if in_virtualenv or in_venv:
+        print('ERROR: Found active virtualenv or venv. Deactivate before bootstrap, '
+              'since bootstrap creates its own venv.')
+        exit(1)
+
     parser = argparse.ArgumentParser()
 
     _descr = """These options control what is installed and where."""
@@ -230,7 +237,7 @@ def main():
         default=None,
         help="The temporary directory that this script uses for self-setup.",
     )
-    dev_group.add_argument("--log-level", default=None, choices=["DEBUG", "TRACE"])
+    dev_group.add_argument("--log-level", default=None, choices=["debug", "trace"])
     dev_group.add_argument(
         "--no-clean-up",
         dest="clean_up",
