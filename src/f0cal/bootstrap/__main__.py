@@ -194,9 +194,23 @@ def main():
     ), "Sorry, this script relies on v3.6+ language features."
 
     if subprocess.getstatusoutput('dpkg-query -W')[0] == 0:
+
+        print(f"\nVerifying a compatible c compiler is present:")
+        compilers = {'gcc', 'clang'}
+        found_compiler = False
+        for compiler in compilers:
+            try:
+                subprocess.check_call(shlex.split(f"dpkg-query -W {compiler}"))
+                found_compiler = True
+                break
+            except subprocess.CalledProcessError:
+                continue
+        if not found_compiler:
+            sys.exit(f"ERROR: Did not find compatible c compiler among {str(compilers)}.")
+
         try:
-            print(f"Verifying required apt packages are present:")
-            subprocess.check_call(shlex.split(f"dpkg-query -W gcc python3 git python3-dev python3-venv rsync"))
+            print(f"\nVerifying other required apt packages are present:")
+            subprocess.check_call(shlex.split(f"dpkg-query -W python3 git python3-dev python3-venv rsync"))
         except (ModuleNotFoundError, subprocess.CalledProcessError) as e:
             sys.exit("ERROR: One or more required apt packages not found.")
 
