@@ -9,15 +9,18 @@
 {% set branch = repo.get("branch", defaults.get("branch", None)) %}
 {% set https_user = repo.get("https_user", defaults.get("https_user", None)) %}
 {% set url = repo.get("url", defaults.get("url", None)) %}
+{% set path = "%s/%s" | format(code_dir, name) %}
 
 {{ url }}:
   git.latest:
-    - target: {{ "%s/%s" | format(code_dir, name) }}
+    - target: {{ path }}
 {% if branch %}
     - branch: {{ branch }}
 {% endif %}
 {% if https_user %}
     - https_user: {{ https_user }}
 {% endif %}
+    - unless:
+        - ls {{ path }}
 
 {% endfor %}

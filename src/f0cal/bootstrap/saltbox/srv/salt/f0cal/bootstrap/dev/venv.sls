@@ -17,6 +17,7 @@ venv_bin:
     - contents: |
         #! /bin/bash
         {{ python_exe}} -m venv $@
+
 {{ venv_dir }}:
   virtualenv.managed:
     - venv_bin: {{ temp_dir }}/.pyvenv

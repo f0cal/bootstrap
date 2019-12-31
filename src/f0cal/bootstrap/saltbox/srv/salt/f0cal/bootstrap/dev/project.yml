@@ -23,6 +23,10 @@ repos:
 
   - name: salt
     url: https://github.com/f0cal/salt
+    branch: f0cal
+
+  - name: conan-recipes
+    url: https://github.com/f0cal/conan-recipes
 
 eggs:
   - repo: my-device
@@ -54,6 +58,16 @@ eggs:
     name: salt
 
 tests_default:
-  run: python setup.py test
+  run: ls .pre-commit-config.yaml
 
-tests: []
+tests:
+  - cwd: farm-api
+    run: tests/start_api ../_venv
+
+  # - cwd: my-device
+  # - cwd: my-code
+  # - cwd: farm
+  # - cwd: farm-api
+  # - cwd: core
+  # - cwd: saltbox
+  # - cwd: salt
