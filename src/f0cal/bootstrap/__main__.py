@@ -2,6 +2,7 @@
 
 import argparse
 import contextlib
+import importlib
 import json
 import os
 import platform
@@ -261,18 +262,6 @@ class DebianInstaller(InstallerBase):
 
 
 class FormulaBase(types.SimpleNamespace):
-    @property
-    def saltbox_command(self):
-        raise NotImplementedError()
-
-    @classmethod
-    def from_kwargs(cls,):
-        raise NotImplementedError()
-
-
-class UserFormula(FormulaBase):
-    _NAME = "user"
-
     @classmethod
     def from_kwargs(cls, **kwargs):
 
@@ -289,8 +278,8 @@ class UserFormula(FormulaBase):
             kwargs["contraints"] = constraints_file.read()
         kwargs["cwd"] = os.getcwd()
 
-        state_kwargs = dict(k.split("=") for k in kwargs.pop("state_kwarg", None) or [])
-        kwargs.update(state_kwargs)
+        salt_kwargs = dict(k.split("=") for k in kwargs.pop("salt_kwarg", None) or [])
+        kwargs.update(salt_kwargs)
         return cls(**kwargs)
 
     @property
@@ -308,12 +297,20 @@ class UserFormula(FormulaBase):
         return cmd
 
 
+class UserFormula(FormulaBase):
+    _NAME = "user"
+
+
+class DevFormula(FormulaBase):
+    _NAME = "dev"
+
+
 INSTALLERS = [DebianInstaller]
-FORMULAS = {"user": UserFormula}
+FORMULAS = {"user": UserFormula, "dev": DevFormula}
 
 
 def install(
-    formula=None,
+    salt_formula=None,
     temp_dir=None,
     clean_up=True,
     saltbox_repo=None,
@@ -333,7 +330,7 @@ def install(
         )
 
     Installer = possible_installers.pop()
-    Formula = FORMULAS[formula or "user"]
+    Formula = FORMULAS[salt_formula or "user"]
 
     Installer.assert_prereqs()
     with Installer.from_temp_dir(temp_dir=temp_dir, clean_up=clean_up) as installer:
@@ -344,12 +341,11 @@ def install(
         )
         installer.unpack_to_venv(**_venv_packages)
         with installer.venv.active:
-            import saltbox
-            import f0cal.bootstrap
-
+            saltbox = importlib.__import__("saltbox")
+            f0b = importlib.import_module("f0cal.bootstrap")
             config = saltbox.SaltBoxConfig.from_env(use_install_cache=False)
             with saltbox.SaltBox.installer_factory(config) as api:
-                api.add_package(f0cal.bootstrap.saltbox_path())
+                api.add_package(f0b.saltbox_path())
             config = saltbox.SaltBoxConfig.from_env(block=False)
             with saltbox.SaltBox.executor_factory(config) as api:
                 formula = Formula.from_kwargs(log_level=log_level, **kwargs)
@@ -408,7 +404,7 @@ def main():
         "--salt-formula", default=None, help="Run a non-standard salt formula."
     )
     dev_group.add_argument(
-        "--formula-kwarg",
+        "--salt-kwarg",
         default=None,
         action="append",
         help="Named argument to a non-standard salt formula.",
