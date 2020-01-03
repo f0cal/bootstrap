@@ -36,7 +36,6 @@ eggs:
     name: f0cal.my-code
 
   - repo: farm
-    url: https://github.com/f0cal/farm
     name: f0cal.farm.client
 
   - repo: farm-api
@@ -62,7 +61,7 @@ tests_default:
 
 tests:
   - cwd: farm-api
-    run: tests/start_api ../_venv
+    run: bootstrap/bootstrap ../_venv
 
   # - cwd: my-device
   # - cwd: my-code
