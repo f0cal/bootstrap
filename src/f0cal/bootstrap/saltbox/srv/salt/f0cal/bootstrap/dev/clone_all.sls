@@ -12,7 +12,7 @@
 {% set path = "%s/%s" | format(code_dir, name) %}
 
 {{ url }}:
-  git.latest:
+  git.cloned:
     - target: {{ path }}
 {% if branch %}
     - branch: {{ branch }}

@@ -3,8 +3,8 @@
 {% set venv_dir = "%s/_venv" | format(code_dir) %}
 {% set skip_list = salt['pillar.get']("cli:skip", None) %}
 {% set python_exe = salt['pillar.get']("cli:python", None) %}
-{% set requirements_file = "%s/dev_requirements.txt" | format(code_dir) %}
-{% set constraints_file = "%s/dev_constraints.txt" | format(code_dir) %}
+{% set requirements_file = "%s/requirements.txt" | format(code_dir) %}
+{% set constraints_file = "%s/constraints.txt" | format(code_dir) %}
 {% set setup_file = "%s/setup_requirements.txt" | format(code_dir) %}
 {% set pip_exe = "%s/bin/pip" | format(venv_dir) %}
 {% set temp_dir = salt['temp.dir']() %}
