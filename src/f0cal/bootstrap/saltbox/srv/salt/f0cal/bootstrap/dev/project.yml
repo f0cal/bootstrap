@@ -57,16 +57,22 @@ eggs:
     name: salt
 
 tests_default:
-  run: ls .pre-commit-config.yaml
+  run: source ../_venv/bin/activate && python setup.py test
 
 tests:
-  - cwd: farm-api
-    run: bootstrap/bootstrap ../_venv
+  - cwd: my-device
 
-  # - cwd: my-device
-  # - cwd: my-code
-  # - cwd: farm
-  # - cwd: farm-api
-  # - cwd: core
-  # - cwd: saltbox
-  # - cwd: salt
+  - cwd: my-code
+
+  - cwd: farm
+
+  - cwd: farm-api/device_farm
+    run: source ../../_venv/bin/activate && python setup.py test
+
+  - cwd: core/plugnparse
+    run: source ../../_venv/bin/activate && python setup.py test
+
+  - cwd: core/f0cal
+    run: source ../../_venv/bin/activate && python setup.py test
+
+  - cwd: saltbox

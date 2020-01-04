@@ -27,7 +27,7 @@ install_repos:
     - require:
         - salt: clone_repos
 
-run_tests:
+run_unit_tests:
   salt.runner:
     - name: state.orchestrate
     - arg:
@@ -36,3 +36,13 @@ run_tests:
     - saltenv: {{ saltenv }}
     - require:
         - salt: install_repos
+
+run_integration_tests:
+  salt.runner:
+    - name: state.orchestrate
+    - arg:
+        - dev.int_test
+    - pillar: {{ pillar }}
+    - saltenv: {{ saltenv }}
+    - require:
+        - salt: run_unit_tests

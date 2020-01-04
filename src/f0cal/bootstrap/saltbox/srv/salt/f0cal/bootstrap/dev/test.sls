@@ -8,7 +8,7 @@
 {% set run = test.get("run", defaults.get("run", None)) %}
 {% if run %}
 
-test-{{ loop.index }}:
+test-{{ loop.index }}-{{ test.cwd }}:
   cmd.run:
     - name: {{ run }}
     - cwd: {{ code_dir }}/{{ test.cwd }}
