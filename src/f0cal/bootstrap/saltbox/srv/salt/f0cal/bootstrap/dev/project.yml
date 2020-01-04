@@ -1,3 +1,5 @@
+{% set HERE = pillar['cli']['code_dir'] %}
+
 repos_default:
   branch: dev
   lang: py3
@@ -5,18 +7,22 @@ repos_default:
 repos:
   - name: my-device
     url: https://github.com/f0cal/my-device
+    branch: master
 
   - name: my-code
     url: https://github.com/f0cal/my-code
+    branch: master
 
   - name: farm
     url: https://github.com/f0cal/farm
+    branch: master
 
   - name: farm-api
     url: https://github.com/f0cal/device-farm
 
   - name: core
     url: https://github.com/f0cal/core
+    branch: master
 
   - name: saltbox
     url: https://github.com/f0cal/saltbox
@@ -27,6 +33,9 @@ repos:
 
   - name: conan-recipes
     url: https://github.com/f0cal/conan-recipes
+
+  - name: tests
+    url: https://github.com/f0cal/test-suite
 
 eggs:
   - repo: my-device
@@ -57,7 +66,7 @@ eggs:
     name: salt
 
 tests_default:
-  run: source ../_venv/bin/activate && python setup.py test
+  run: run-parts {{ HERE }}/tests/per-repo --arg {{ HERE }}/_venv
 
 tests:
   - cwd: my-device
@@ -67,12 +76,9 @@ tests:
   - cwd: farm
 
   - cwd: farm-api/device_farm
-    run: source ../../_venv/bin/activate && python setup.py test
 
   - cwd: core/plugnparse
-    run: source ../../_venv/bin/activate && python setup.py test
 
   - cwd: core/f0cal
-    run: source ../../_venv/bin/activate && python setup.py test
 
-  - cwd: saltbox
+  - cwd: saltbox 

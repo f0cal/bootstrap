@@ -27,22 +27,42 @@ install_repos:
     - require:
         - salt: clone_repos
 
-run_unit_tests:
-  salt.runner:
-    - name: state.orchestrate
-    - arg:
-        - dev.test
-    - pillar: {{ pillar }}
-    - saltenv: {{ saltenv }}
-    - require:
-        - salt: install_repos
+# run_unit_tests:
+#   salt.runner:
+#     - name: state.orchestrate
+#     - arg:
+#         - dev.test
+#     - pillar: {{ pillar }}
+#     - saltenv: {{ saltenv }}
+#     - require:
+#         - salt: install_repos
 
 run_integration_tests:
   salt.runner:
     - name: state.orchestrate
     - arg:
-        - dev.int_test
+        - dev.integration_tests
+    - pillar: {{ pillar }}
+    - saltenv: {{ saltenv }}
+    # - require:
+    #     - salt: run_unit_tests
+
+git_push:
+  salt.runner:
+    - name: state.orchestrate
+    - arg:
+        - dev.git_push
     - pillar: {{ pillar }}
     - saltenv: {{ saltenv }}
     - require:
-        - salt: run_unit_tests
+        - salt: run_integration_tests
+
+pypi_push:
+  salt.runner:
+    - name: state.orchestrate
+    - arg:
+        - dev.pypi_push
+    - pillar: {{ pillar }}
+    - saltenv: {{ saltenv }}
+    - require:
+        - salt: git_push
