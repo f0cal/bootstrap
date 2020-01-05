@@ -56,6 +56,7 @@ setup_pip_install:
 pip_install:
   cmd.run:
     - name: {{ pip_exe }} install -r {{ requirements_file }} -c {{ constraints_file }}
+    - cwd: {{ code_dir }}
     - require:
         - file: {{ requirements_file }}
         - file: {{ constraints_file }}

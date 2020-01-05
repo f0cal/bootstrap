@@ -6,8 +6,7 @@ repos_default:
 
 repos:
   - name: my-device
-    url: https://github.com/f0cal/my-device
-    branch: master
+    url: https://github.com/f0cal/my-device-mirror
 
   - name: my-code
     url: https://github.com/f0cal/my-code
@@ -17,7 +16,7 @@ repos:
     url: https://github.com/f0cal/farm
     branch: master
 
-  - name: farm-api
+  - name: device-farm
     url: https://github.com/f0cal/device-farm
 
   - name: core
@@ -47,7 +46,7 @@ eggs:
   - repo: farm
     name: f0cal.farm.client
 
-  - repo: farm-api
+  - repo: device-farm
     name: f0cal.service.device_farm
     subdir: device_farm
 
@@ -66,7 +65,7 @@ eggs:
     name: salt
 
 tests_default:
-  run: run-parts {{ HERE }}/tests/per-repo --arg {{ HERE }}/_venv
+  run: run-parts {{ HERE }}/tests/egg --arg {{ HERE }}/_venv
 
 tests:
   - cwd: my-device
@@ -75,7 +74,13 @@ tests:
 
   - cwd: farm
 
-  - cwd: farm-api/device_farm
+  - cwd: device-farm
+    run: run-parts {{ HERE }}/tests/repo
+
+  - cwd: device-farm/device_farm
+
+  - cwd: device-farm
+    run: run-parts {{ HERE }}/tests/repo
 
   - cwd: core/plugnparse
 

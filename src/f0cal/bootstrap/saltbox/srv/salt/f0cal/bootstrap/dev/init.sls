@@ -44,8 +44,9 @@ run_integration_tests:
         - dev.integration_tests
     - pillar: {{ pillar }}
     - saltenv: {{ saltenv }}
-    # - require:
-    #     - salt: run_unit_tests
+    - require:
+        - salt: install_repos
+        # - salt: run_unit_tests
 
 git_push:
   salt.runner:
