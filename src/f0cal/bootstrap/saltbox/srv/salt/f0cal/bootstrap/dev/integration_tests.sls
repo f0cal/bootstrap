@@ -2,8 +2,7 @@
 {% set f0cal_env = salt['pillar.get']("cli:f0cal_env", "dev") %}
 {% set test_dir = "%s/tests/integration" | format(code_dir) %}
 
-{% for exe in salt['file.readdir'](test_dir) %}
-{% if not exe.startswith(".") %}
+{% for exe in salt['file.readdir'](test_dir) | sort | reject('eq', '.') | reject('eq', '..')  %}
 
 integration_test--{{ loop.index  }}:
   cmd.run:
@@ -13,5 +12,4 @@ integration_test--{{ loop.index  }}:
         - LC_CTYPE: 'en_US.UTF-8'
         - LANG: 'en_US.UTF-8'
 
-{% endif %}
 {% endfor %}
