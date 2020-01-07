@@ -79,7 +79,7 @@ tests:
 
   - cwd: device-farm/device_farm
 
-  - cwd: device-farm
+  - cwd: core
     run: run-parts {{ HERE }}/tests/repo
 
   - cwd: core/plugnparse
