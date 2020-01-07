@@ -46,12 +46,12 @@ pip_upgrade:
   cmd.run:
     - name: {{ pip_exe }} install --upgrade pip
 
-setup_pip_install:
-  cmd.run:
-    - name : {{ pip_exe }} install -r {{ setup_file }}
-    - require:
-        - file: {{ setup_file }}
-        - cmd: pip_upgrade
+# setup_pip_install:
+#   cmd.run:
+#     - name : {{ pip_exe }} install -r {{ setup_file }}
+#     - require:
+#         - file: {{ setup_file }}
+#         - cmd: pip_upgrade
 
 pip_install:
   cmd.run:
@@ -60,7 +60,8 @@ pip_install:
     - require:
         - file: {{ requirements_file }}
         - file: {{ constraints_file }}
-        - cmd: setup_pip_install
+        # - cmd: setup_pip_install
+        - cmd: pip_upgrade
     - env:
         - LC_CTYPE: 'en_US.UTF-8'
         - LANG: 'en_US.UTF-8'

@@ -304,9 +304,12 @@ class UserFormula(FormulaBase):
 class DevFormula(FormulaBase):
     _NAME = "dev"
 
+class ReleaseFormula(FormulaBase):
+    _NAME = "dev.release"
+
 
 INSTALLERS = [DebianInstaller]
-FORMULAS = {"user": UserFormula, "dev": DevFormula}
+FORMULAS = {"user": UserFormula, "dev": DevFormula, "release": ReleaseFormula}
 
 
 def install(
