@@ -58,12 +58,12 @@ git_push:
     - require:
         - salt: run_integration_tests
 
-pypi_push:
-  salt.runner:
-    - name: state.orchestrate
-    - arg:
-        - dev.pypi_push
-    - pillar: {{ pillar }}
-    - saltenv: {{ saltenv }}
-    - require:
-        - salt: git_push
+# pypi_push:
+#   salt.runner:
+#     - name: state.orchestrate
+#     - arg:
+#         - dev.pypi_push
+#     - pillar: {{ pillar }}
+#     - saltenv: {{ saltenv }}
+#     - require:
+#         - salt: git_push
