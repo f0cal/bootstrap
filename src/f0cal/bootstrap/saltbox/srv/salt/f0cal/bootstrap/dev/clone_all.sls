@@ -24,11 +24,10 @@
     - unless:
         - ls {{ path }}
 
-# TODO: Determine where to assert allow_unclean and uncomment next 6 lines:
-# {% if not allow_unclean %}
-# repo-{{ name }}-is-porcelain--before:
-#   cmd.run:
-#     - name: test -z "$(git status --porcelain)"
-#     - cwd: {{ path }}
-# {% endif %}
+{% if not allow_unclean %}
+repo-{{ name }}-is-porcelain--before:
+  cmd.run:
+    - name: test -z "$(git status --porcelain)"
+    - cwd: {{ path }}
+{% endif %}
 {% endfor %}
