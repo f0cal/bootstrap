@@ -1,8 +1,6 @@
 {% set url = "https://github.com/f0cal/project" %}
 {% set code_dir = pillar['cli']['code_dir'] %}
-# TODO: Restore next line to replace following line, after determining where to specify branch for project repo.
-# {% set branch = salt['pillar.get']("cli:branch", None) %}
-{% set branch = "ci" %}
+{% set branch = salt['pillar.get']("cli:branch", None) %}
 
 {% set dir_exists = salt['file.directory_exists'](code_dir) %}
 # {% set file_exists = salt['file.file_exists'](code_dir) %}
