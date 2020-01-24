@@ -1,4 +1,4 @@
-{% set url = "https://github.com/f0cal/project" %}
+{% set url = "git@github.com:f0cal/project.git" %}
 {% set code_dir = pillar['cli']['code_dir'] %}
 {% set branch = salt['pillar.get']("cli:branch", None) %}
 
