@@ -6,9 +6,38 @@
 
 {% for test in project.tests %}
 {% set run = test.get("run", defaults.get("run", None)) %}
+{% if run %}
 
-{{ run }}:
+test-{{ loop.index }}-{{ test.cwd }}:
   cmd.run:
+    - name: {{ run }}
     - cwd: {{ code_dir }}/{{ test.cwd }}
+    - env:
+        - LC_CTYPE: 'en_US.UTF-8'
+        - LANG: 'en_US.UTF-8'
 
+
+{% endif %}
+{% endfor %}
+
+{% for test in project.tests %}
+{% set script = test.get("script", defaults.get("script", None)) %}
+{% if script %}
+{% set script_name = salt["temp.file"]() %}
+
+{{ script_name }}:
+  file.managed:
+    - contents:
+{% for line in script.split("\n") %}
+        - {{ line }}
+{% endfor %}
+
+script-test-{{ loop.index }}:
+  cmd.run:
+    - name: {{ script_name }}
+    - cwd: {{ code_dir }}/{{ test.cwd }}
+    - require:
+        - file: {{ script_name }}
+
+{% endif %}
 {% endfor %}

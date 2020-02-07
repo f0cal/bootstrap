@@ -1,0 +1,12 @@
+{% set version = "0.0.1" %}
+
+{% set subdir = "" %}
+{% if egg.get("subdir", None ) %}
+{% set subdir = "&subdirectory=%s" | format(egg.subdir) %}
+{% endif %}
+
+{% set full_url = "git+%s#egg=%s-%s%s" | format(repo.url, egg.name, version, subdir) %}
+
+<html>
+    <a href="{{ full_url }}">{{ egg.name }}-{{ version }}</a>
+</html>

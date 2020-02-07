@@ -1,6 +1,7 @@
 {% set code_dir = pillar['cli']['code_dir'] %}
 {% set project_yml = "%s/project.yml" | format(code_dir) %}
 {% set project = salt["file.read"](project_yml) | load_yaml %}
+{% set code_dir = "$"+"{PWD}" %}
 
 {% set defaults = project.repos_default %}
 

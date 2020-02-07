@@ -1,55 +1,37 @@
 #! /usr/bin/env python3
 
 import argparse
+import contextlib
+import importlib
 import json
 import os
+import platform
 import shlex
 import shutil
 import site
 import subprocess
 import sys
 import tempfile
+import types
 import venv
 
 
-class Installer:
+class EnvBase(types.SimpleNamespace):
+    @classmethod
+    def from_ambient(cls):
+        return cls(sys=vars(sys).copy(), environ=vars(os.environ).copy(), is_venv=False)
 
-    REQUIREMENTS = {}
-    REQUIREMENTS["f0cal.bootstrap"] = "f0cal.bootstrap"
+    @classmethod
+    def from_venv_path(cls, path):
+        return cls(path=path)
 
-    CONSTRAINTS = {}
-    CONSTRAINTS[
-        "plugnparse"
-    ] = "git+https://github.com/f0cal/core#subdirectory=plugnparse&egg=plugnparse"
-    CONSTRAINTS["saltbox"] = "git+https://github.com/f0cal/saltbox#egg=saltbox"
-    CONSTRAINTS[
-        "f0cal.bootstrap"
-    ] = "git+https://github.com/f0cal/bootstrap#egg=f0cal.bootstrap"
+    def activate(self):
+        raise NotImplementedError()
 
-    TMP_PREFIX = "f0cal-bootstrap-"
 
-    def __init__(self, temp_dir=None, clean_up=True):
-        self._temp_dir = temp_dir or tempfile.mkdtemp(prefix=self.TMP_PREFIX)
-        self._create_venv()
-        self._clean_up = clean_up
-
-    @property
-    def path(self):
-        return self._temp_dir
-
-    def _create_venv(self):
-        venv.create(self.path, with_pip=True)
-
-    def activate_venv(self):
-        self._activate_venv(self.path)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args, **dargs):
-        if not self._clean_up:
-            return
-        shutil.rmtree(self.path)
+class InsideEnv(EnvBase):
+    def activate(self):
+        return self._activate_venv(self.path)
 
     @staticmethod
     def _activate_venv(env_dir):
@@ -103,6 +85,87 @@ class Installer:
         new = list(sys.path)
         sys.path[:] = [i for i in new if i not in prev] + [i for i in new if i in prev]
 
+
+class OutsideEnv(EnvBase):
+    def activate(self):
+        pass
+
+
+class Venv:
+    def __init__(self, path):
+        self._path = path
+        self._created = False
+        self._outside_env = OutsideEnv.from_ambient()
+        self._inside_env = InsideEnv.from_venv_path(self._path)
+
+    @property
+    @contextlib.contextmanager
+    def active(self):
+        try:
+            self.activate()
+            yield self
+        finally:
+            self.deactivate()
+
+    def create(self):
+        assert not self._created
+        venv.create(self._path, with_pip=True)
+        self._created = True
+
+    def activate(self):
+        self._inside_env.activate()
+
+    def deactivate(self):
+        self._outside_env.activate()
+
+    @classmethod
+    def from_path(cls, path):
+        return cls(path)
+
+
+class InstallerBase:
+
+    REQUIREMENTS = {}
+    REQUIREMENTS["f0cal.bootstrap"] = "f0cal.bootstrap"
+
+    CONSTRAINTS = {}
+    CONSTRAINTS[
+        "plugnparse"
+    ] = "git+https://github.com/f0cal/core#subdirectory=plugnparse&egg=plugnparse"
+    CONSTRAINTS["saltbox"] = "git+https://github.com/f0cal/saltbox#egg=saltbox"
+    CONSTRAINTS[
+        "f0cal.bootstrap"
+    ] = "git+https://github.com/f0cal/bootstrap#egg=f0cal.bootstrap"
+
+    TMP_PREFIX = "f0cal-bootstrap-"
+
+    @classmethod
+    def from_temp_dir(cls, temp_dir=None, clean_up=None):
+        return cls(temp_dir, clean_up)
+
+    def __init__(self, temp_dir=None, clean_up=True):
+        self._temp_dir = temp_dir or tempfile.mkdtemp(prefix=self.TMP_PREFIX)
+        self._clean_up = clean_up
+        self._venv = Venv.from_path(self._temp_dir)
+        self._requirements = self.REQUIREMENTS.copy()
+        self._constraints = self.CONSTRAINTS.copy()
+
+    @property
+    def path(self):
+        return self._temp_dir
+
+    @property
+    def venv(self):
+        return self._venv
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **dargs):
+        if not self._clean_up:
+            return
+        shutil.rmtree(self.path)
+
     def _run_exe(self, cmd_str):
         subprocess.check_call(shlex.split(cmd_str))
 
@@ -111,28 +174,146 @@ class Installer:
             contents = "\n".join(_list)
             _file.write(contents)
 
-    def preinstall(self):
+    def unpack_to_venv(self, bootstrap_repo=None, saltbox_repo=None, salt_repo=None):
+
+        if bootstrap_repo is not None:
+            self._constraints["f0cal.bootstrap"] = self.scrub_url(
+                bootstrap_repo, "f0cal.bootstrap"
+            )
+        if saltbox_repo is not None:
+            self._constraints["saltbox"] = self.scrub_url(saltbox_repo, "saltbox")
+        if salt_repo is not None:
+            self._constraints["salt"] = self.scrub_url(salt_repo, "salt")
+
+        self.venv.create()
         self._run_exe(f"{self.path}/bin/pip install --upgrade pip")
         requirements_path = os.path.join(self.path, "requirements.txt")
-        self._render_file(requirements_path, self.REQUIREMENTS.values())
+        self._render_file(requirements_path, self._requirements.values())
         constraints_path = os.path.join(self.path, "constraints.txt")
-        self._render_file(constraints_path, self.CONSTRAINTS.values())
+        self._render_file(constraints_path, self._constraints.values())
         self._run_exe(
             f"{self.path}/bin/pip install -r {requirements_path} -c {constraints_path}"
         )
 
+    @classmethod
+    def supports(cls):
+        raise NotImplementedError()
 
-def scrub_url(url, pkg):
-    if ":" not in url:
-        url = os.path.abspath(url)
-        assert os.path.exists(url)
-        assert os.path.isdir(url)
-        return f"-e file://{url}#egg={pkg}"
-    return url
+    @staticmethod
+    def scrub_url(url, pkg):
+        if ":" not in url:
+            url = os.path.abspath(url)
+            assert os.path.exists(url)
+            assert os.path.isdir(url)
+            return f"-e file://{url}#egg={pkg}"
+        return url
+
+    @staticmethod
+    def assert_python36():
+        assert sys.version_info >= (
+            3,
+            6,
+        ), "Sorry, this script relies on v3.6+ language features."
+
+    @staticmethod
+    def check_venv_is_active():
+        in_virtualenv = hasattr(sys, "real_prefix")
+        in_venv = hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix
+        if in_virtualenv or in_venv:
+            print(
+                "ERROR: Found active virtualenv or venv. Deactivate before bootstrap, "
+                "since bootstrap creates its own venv."
+            )
+            sys, exit(1)
+
+
+class DebianInstaller(InstallerBase):
+    @classmethod
+    def supports(self, platform_tuple):
+        dist, version_num, version_name = platform_tuple
+        return dist in ["Ubuntu", "Debian"]
+
+    @classmethod
+    def assert_prereqs(cls):
+        assert subprocess.getstatusoutput("dpkg-query -W")[0] == 0
+
+        print(f"\nVerifying a compatible c compiler is present:")
+        compilers = {"gcc", "clang"}
+        found_compiler = False
+        for compiler in compilers:
+            try:
+                subprocess.check_call(shlex.split(f"dpkg-query -W {compiler}"))
+                found_compiler = True
+                break
+            except subprocess.CalledProcessError:
+                continue
+        if not found_compiler:
+            sys.exit(
+                f"ERROR: Did not find compatible c compiler among {str(compilers)}."
+            )
+
+        try:
+            print(f"\nVerifying other required apt packages are present:")
+            subprocess.check_call(
+                shlex.split(f"dpkg-query -W python3 git python3-dev python3-venv rsync")
+            )
+        except (ModuleNotFoundError, subprocess.CalledProcessError):
+            sys.exit("ERROR: One or more required apt packages not found.")
+
+
+class FormulaBase(types.SimpleNamespace):
+    @classmethod
+    def from_kwargs(cls, **kwargs):
+
+        if os.geteuid() != 0:
+            assert kwargs.get("venv_dir", None) is not None, (
+                "If you're not root, you probably need to give a --venv-dir! "
+                "If you're already in one, use --venv-dir=${VIRTUALENV}."
+            )
+
+        if "python" not in kwargs:
+            kwargs["python"] = sys.executable
+        constraints_file = kwargs.pop("constraints_file", None)
+        if constraints_file is not None:
+            kwargs["contraints"] = constraints_file.read()
+        kwargs["cwd"] = os.getcwd()
+
+        salt_kwargs = dict(k.split("=") for k in kwargs.pop("salt_kwarg", None) or [])
+        kwargs.update(salt_kwargs)
+        return cls(**kwargs)
+
+    @property
+    def saltbox_command(self):
+        pillar = json.dumps(dict(cli=self.__dict__))
+        cmd = [
+            "salt-run",
+            "state.orchestrate",
+            self._NAME,
+            "saltenv=bootstrap",
+            f"pillar={pillar}",
+        ]
+        if self.log_level is not None:
+            cmd += ["--log-level", self.log_level]
+        return cmd
+
+
+class UserFormula(FormulaBase):
+    _NAME = "user"
+
+
+class DevFormula(FormulaBase):
+    _NAME = "dev"
+
+class ReleaseFormula(FormulaBase):
+    _NAME = "dev.release"
+
+
+INSTALLERS = [DebianInstaller]
+FORMULAS = {"user": UserFormula, "dev": DevFormula, "release": ReleaseFormula}
 
 
 def install(
-    run_state=None,
+    salt_formula=None,
     temp_dir=None,
     clean_up=True,
     saltbox_repo=None,
@@ -142,63 +323,41 @@ def install(
     **kwargs,
 ):
 
-    if "python" not in kwargs:
-        kwargs["python"] = sys.executable
-    constraints_file = kwargs.pop("constraints_file", None)
-    if constraints_file is not None:
-        kwargs["contraints"] = constraints_file.read()
-    kwargs["cwd"] = os.getcwd()
+    my_platform = platform.dist()
+    possible_installers = list(filter(lambda _i: _i.supports(my_platform), INSTALLERS))
 
-    state_kwargs = dict(k.split("=") for k in kwargs.pop("state_kwarg", None) or [])
-    kwargs.update(state_kwargs)
-
-    run_state = run_state or "user"
-    pillar = json.dumps(dict(cli=kwargs))
-    cmd = [
-        "salt-run",
-        "state.orchestrate",
-        run_state,
-        "saltenv=bootstrap",
-        f"pillar={pillar}",
-    ]
-    if log_level is not None:
-        cmd += ["--log-level", log_level]
-
-    if bootstrap_repo is not None:
-        Installer.CONSTRAINTS["f0cal.bootstrap"] = scrub_url(
-            bootstrap_repo, "f0cal.bootstrap"
+    if len(possible_installers) == 0:
+        raise NotImplementedError(
+            f"Sorry, this installer does not support {my_platform}. See"
+            "https://github.com/f0cal/bootstrap for additional options."
         )
-    if saltbox_repo is not None:
-        Installer.CONSTRAINTS["saltbox"] = scrub_url(saltbox_repo, "saltbox")
-    if salt_repo is not None:
-        Installer.CONSTRAINTS["salt"] = scrub_url(salt_repo, "salt")
 
-    with Installer(temp_dir=temp_dir, clean_up=clean_up) as installer:
-        installer.preinstall()
-        installer.activate_venv()
-        import saltbox
-        import f0cal.bootstrap
+    Installer = possible_installers.pop()
+    Formula = FORMULAS[salt_formula or "user"]
 
-        config = saltbox.SaltBoxConfig.from_env(use_install_cache=False)
-        with saltbox.SaltBox.installer_factory(config) as api:
-            api.add_package(f0cal.bootstrap.saltbox_path())
-        config = saltbox.SaltBoxConfig.from_env(block=False)
-        with saltbox.SaltBox.executor_factory(config) as api:
-            return api.execute(*cmd)
+    Installer.assert_prereqs()
+    with Installer.from_temp_dir(temp_dir=temp_dir, clean_up=clean_up) as installer:
+        _venv_packages = dict(
+            bootstrap_repo=bootstrap_repo,
+            saltbox_repo=saltbox_repo,
+            salt_repo=salt_repo,
+        )
+        installer.unpack_to_venv(**_venv_packages)
+        with installer.venv.active:
+            saltbox = importlib.__import__("saltbox")
+            f0b = importlib.import_module("f0cal.bootstrap")
+            config = saltbox.SaltBoxConfig.from_env(use_install_cache=False)
+            with saltbox.SaltBox.installer_factory(config) as api:
+                api.add_package(f0b.saltbox_path())
+            config = saltbox.SaltBoxConfig.from_env(block=False)
+            with saltbox.SaltBox.executor_factory(config) as api:
+                formula = Formula.from_kwargs(log_level=log_level, **kwargs)
+                return api.execute(*formula.saltbox_command)
 
 
 def main():
-    assert sys.version_info >= (
-        3,
-        6,
-    ), "Sorry, this script relies on v3.6+ language features."
 
-    in_virtualenv = hasattr(sys, 'real_prefix')
-    in_venv = hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix
-    if in_virtualenv or in_venv:
-        print('ERROR: Found active virtualenv or venv. Deactivate before bootstrap, '
-              'since bootstrap creates its own venv.')
-        exit(1)
+    InstallerBase.assert_python36()
 
     parser = argparse.ArgumentParser()
 
@@ -208,7 +367,7 @@ def main():
     install_group.add_argument(
         "--venv-dir",
         type=lambda x: os.path.abspath(x),
-        default=None,
+        default=".venv",
         help="Filesystem path at which to create a Python3 virtual environement.",
     )
 
@@ -245,13 +404,13 @@ def main():
         help="Use a pip constraints file when installing.",
     )
     dev_group.add_argument(
-        "--run-state", default=None, help="Run a non-standard salt state."
+        "--salt-formula", default=None, help="Run a non-standard salt formula."
     )
     dev_group.add_argument(
-        "--state-kwarg",
+        "--salt-kwarg",
         default=None,
         action="append",
-        help="Run a non-standard salt state.",
+        help="Named argument to a non-standard salt formula.",
     )
 
     _descr = """ADVANCED. Use an alternate version of <package> during bootstrap. Accepts
