@@ -21,7 +21,7 @@ repo-{{ name }}-is-porcelain--after:
 
 {{ code_dir }}/project.yml:
   file.managed:
-    - source: salt://{{ slspath }}/project.yml
+    - source: salt://{{ tpldir }}/project.yml
     - makedirs: True
     - template: jinja
     - context:

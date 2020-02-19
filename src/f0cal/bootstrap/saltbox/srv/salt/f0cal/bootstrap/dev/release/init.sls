@@ -19,7 +19,7 @@
 
 {{ out_dir }}/{{ name.replace(".", "-") }}/index.html:
   file.managed:
-    - source: salt://{{ slspath }}/index.html
+    - source: salt://{{ tpldir }}/index.html
     - template: jinja
     - context:
         egg: {{ egg }}

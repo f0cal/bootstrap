@@ -26,19 +26,19 @@ venv_bin:
 
 {{ requirements_file }}:
   file.managed:
-    - source: salt://{{ slspath }}/dev_requirements.txt
+    - source: salt://{{ tpldir }}/dev_requirements.txt
     - template: jinja
     - makedirs: True
 
 {{ constraints_file }}:
   file.managed:
-    - source: salt://{{ slspath }}/dev_constraints.txt
+    - source: salt://{{ tpldir }}/dev_constraints.txt
     - template: jinja
     - makedirs: True
 
 {{ setup_file }}:
   file.managed:
-    - source: salt://{{ slspath }}/setup_requirements.txt
+    - source: salt://{{ tpldir }}/setup_requirements.txt
     - template: jinja
     - makedirs: True
 

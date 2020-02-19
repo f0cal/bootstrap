@@ -7,7 +7,7 @@
 
 # {{ code_dir }}/project.yml:
 #   file.managed:
-#       - source: salt://{{ slspath }}/project.yml
+#       - source: salt://{{ tpldir }}/project.yml
 #       - makedirs: True
 #       - template: jinja
 #       - unless:
