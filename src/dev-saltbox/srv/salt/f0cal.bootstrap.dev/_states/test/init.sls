@@ -8,13 +8,16 @@
 {% set run = test.get("run", defaults.get("run", None)) %}
 {% if run %}
 
-test-{{ loop.index }}-{{ test.cwd }}:
+test-{{ loop.index }}:
   cmd.run:
     - name: {{ run }}
-    - cwd: {{ code_dir }}/{{ test.cwd }}
+    - cwd: {{ code_dir }}
     - env:
         - LC_CTYPE: 'en_US.UTF-8'
         - LANG: 'en_US.UTF-8'
+{% for key in test.args %}
+        - {{ key }}: {{ test.args[key] }}
+{% endfor %}
 
 
 {% endif %}
@@ -35,7 +38,7 @@ test-{{ loop.index }}-{{ test.cwd }}:
 script-test-{{ loop.index }}:
   cmd.run:
     - name: {{ script_name }}
-    - cwd: {{ code_dir }}/{{ test.cwd }}
+    - cwd: {{ code_dir }}
     - require:
         - file: {{ script_name }}
 

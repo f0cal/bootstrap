@@ -1,41 +1,41 @@
 
-write_repo_list:
+project:
   salt.runner:
     - name: state.orchestrate
     - arg:
-        - dev.repo_list
-    - pillar: {{ pillar }}
+        - _states.project
+    - pillar: {{ pillar | tojson() }}
     - saltenv: {{ saltenv }}
 
-clone_repos:
+clone:
   salt.runner:
     - name: state.orchestrate
     - arg:
-        - dev.clone_all
-    - pillar: {{ pillar }}
-    - saltenv: {{ saltenv }}
-    - require:
-        - salt: write_repo_list
-
-install_repos:
-  salt.runner:
-    - name: state.orchestrate
-    - arg:
-        - dev.venv
-    - pillar: {{ pillar }}
+        - _states.clone
+    - pillar: {{ pillar | tojson() }}
     - saltenv: {{ saltenv }}
     - require:
-        - salt: clone_repos
+        - salt: project
 
-# run_unit_tests:
-#   salt.runner:
-#     - name: state.orchestrate
-#     - arg:
-#         - dev.test
-#     - pillar: {{ pillar }}
-#     - saltenv: {{ saltenv }}
-#     - require:
-#         - salt: install_repos
+env:
+  salt.runner:
+    - name: state.orchestrate
+    - arg:
+        - _states.env
+    - pillar: {{ pillar | tojson() }}
+    - saltenv: {{ saltenv }}
+    - require:
+        - salt: clone
+
+test:
+  salt.runner:
+    - name: state.orchestrate
+    - arg:
+        - _states.test
+    - pillar: {{ pillar | tojson() }}
+    - saltenv: {{ saltenv }}
+    - require:
+        - salt: env
 
 # TODO: Re-enable after fixing these tests
 # TODO: ensure optional so we can test that bootstrapped install runs without the tests.
@@ -43,7 +43,7 @@ install_repos:
 #   salt.runner:
 #     - name: state.orchestrate
 #     - arg:
-#         - dev.integration_tests
+#         - integration_tests
 #     - pillar: {{ pillar }}
 #     - saltenv: {{ saltenv }}
 #     - require:
@@ -55,7 +55,7 @@ install_repos:
 #   salt.runner:
 #     - name: state.orchestrate
 #     - arg:
-#         - dev.git_push
+#         - git_push
 #     - pillar: {{ pillar }}
 #     - saltenv: {{ saltenv }}
 #     - require:
@@ -65,7 +65,7 @@ install_repos:
 #   salt.runner:
 #     - name: state.orchestrate
 #     - arg:
-#         - dev.pypi_push
+#         - pypi_push
 #     - pillar: {{ pillar }}
 #     - saltenv: {{ saltenv }}
 #     - require:

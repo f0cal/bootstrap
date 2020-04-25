@@ -1,1 +1,0 @@
-../src/f0cal/bootstrap/__main__.py

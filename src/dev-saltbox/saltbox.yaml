@@ -1,0 +1,114 @@
+name: f0cal.bootstrap.dev
+
+formulas:
+
+  - name: all
+    config:
+      master: False
+      minion: False
+    template: |
+      salt-call
+        --local \
+        state.sls _orch.all \
+        saltenv={{ saltbox.formula.saltenv }} \
+        pillar='{{ {"cli": saltbox.cli} | tojson() }}'
+    saltenv: f0cal.bootstrap.dev
+    args:
+      - name: code_dir
+        type: "__import__('os').path.abspath"
+      - name: ["-u", "--git-url"]
+
+  - name: init
+    config:
+      master: False
+      minion: False
+    template: |
+      salt-call
+        --local \
+        state.sls _states.project \
+        saltenv={{ saltbox.formula.saltenv }} \
+        pillar='{{ {"cli": saltbox.cli} | tojson() }}'
+    saltenv: f0cal.bootstrap.dev
+    args:
+      - name: code_dir
+        type: "__import__('os').path.abspath"
+      - name: ["-u", "--git-url"]
+
+  - name: clone
+    config:
+      master: False
+      minion: False
+    template: |
+      salt-call
+        --local \
+        state.sls _states.clone \
+        saltenv={{ saltbox.formula.saltenv }} \
+        pillar='{{ {"cli": saltbox.cli} | tojson() }}'
+    saltenv: f0cal.bootstrap.dev
+    args:
+      - name: code_dir
+        type: "__import__('os').path.abspath"
+      - name: ["-u", "--git-url"]
+
+  - name: env
+    config:
+      master: False
+      minion: False
+    template: |
+      salt-call
+        --local \
+        state.sls _states.env \
+        saltenv={{ saltbox.formula.saltenv }} \
+        pillar='{{ {"cli": saltbox.cli} | tojson() }}'
+    saltenv: f0cal.bootstrap.dev
+    args:
+      - name: code_dir
+        type: "__import__('os').path.abspath"
+
+  - name: status
+    config:
+      master: False
+      minion: False
+    template: |
+      salt-call
+        --local \
+        state.sls _states.status \
+        saltenv={{ saltbox.formula.saltenv }} \
+        pillar='{{ {"cli": saltbox.cli} | tojson() }}'
+    saltenv: f0cal.bootstrap.dev
+    args:
+      - name: code_dir
+        type: "__import__('os').path.abspath"
+      - name: ["-u", "--git-url"]
+
+  - name: test
+    config:
+      master: False
+      minion: False
+    template: |
+      salt-call
+        --local \
+        state.sls _states.test \
+        saltenv={{ saltbox.formula.saltenv }} \
+        pillar='{{ {"cli": saltbox.cli} | tojson() }}'
+    saltenv: f0cal.bootstrap.dev
+    args:
+      - name: code_dir
+        type: "__import__('os').path.abspath"
+      - name: ["-i", "--integration-tests"]
+        default: False
+
+  - name: build.api
+    config:
+      master: False
+      minion: False
+    template: |
+      salt-call
+        --local \
+        state.sls _states.build.api \
+        saltenv={{ saltbox.formula.saltenv }} \
+        pillar='{{ {"cli": saltbox.cli} | tojson() }}'
+    saltenv: f0cal.bootstrap.dev
+    args:
+      - name: code_dir
+        type: "__import__('os').path.abspath"

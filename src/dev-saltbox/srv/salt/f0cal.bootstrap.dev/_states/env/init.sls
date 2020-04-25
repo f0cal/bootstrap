@@ -2,7 +2,7 @@
 {% set code_dir = salt['pillar.get']("cli:code_dir", cwd) %}
 {% set venv_dir = "%s/_venv" | format(code_dir) %}
 {% set skip_list = salt['pillar.get']("cli:skip", None) %}
-{% set python_exe = salt['pillar.get']("cli:python", None) %}
+{% set python_exe = salt['pillar.get']("cli:python", "/usr/bin/python3") %}
 {% set requirements_file = "%s/requirements.txt" | format(code_dir) %}
 {% set constraints_file = "%s/constraints.txt" | format(code_dir) %}
 {% set setup_file = "%s/setup_requirements.txt" | format(code_dir) %}
@@ -16,7 +16,7 @@ venv_bin:
     - mode: 777
     - contents: |
         #! /bin/bash
-        {{ python_exe}} -m venv $@
+        {{ python_exe }} -m venv $@
 
 {{ venv_dir }}:
   virtualenv.managed:
@@ -44,14 +44,14 @@ venv_bin:
 
 pip_upgrade:
   cmd.run:
-    - name: {{ pip_exe }} install --upgrade pip
+    - name: {{ pip_exe }} install --upgrade pip wheel
 
-# setup_pip_install:
-#   cmd.run:
-#     - name : {{ pip_exe }} install -r {{ setup_file }}
-#     - require:
-#         - file: {{ setup_file }}
-#         - cmd: pip_upgrade
+setup_pip_install:
+  cmd.run:
+    - name : {{ pip_exe }} install -r {{ setup_file }}
+    - require:
+        - file: {{ setup_file }}
+        - cmd: pip_upgrade
 
 pip_install:
   cmd.run:
@@ -60,7 +60,7 @@ pip_install:
     - require:
         - file: {{ requirements_file }}
         - file: {{ constraints_file }}
-        # - cmd: setup_pip_install
+        - cmd: setup_pip_install
         - cmd: pip_upgrade
     - env:
         - LC_CTYPE: 'en_US.UTF-8'
