@@ -60,5 +60,5 @@ project-push:
     - name: git -C {{ code_dir }} push origin {{ project_branch }}
     - require:
 {% for repo in project.repos %}
-        - cmd: {{ repo.name }}-push:
+        - cmd: {{ repo.name }}-push
 {% endfor %}
