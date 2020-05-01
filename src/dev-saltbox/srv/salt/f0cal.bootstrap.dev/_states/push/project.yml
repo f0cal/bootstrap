@@ -4,4 +4,4 @@
 # {% do repo.update({'rev': rev}) %}
 # {% endfor %}
 
-{{ project | toyaml() }}
+{{ project | to_yaml() }}
