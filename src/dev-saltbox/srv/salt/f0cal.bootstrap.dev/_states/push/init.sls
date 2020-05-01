@@ -18,7 +18,7 @@ git-diff--{{ code_dir }}/{{ repo.name }}:
     - template: jinja
     - context:
         code_dir: {{ code_dir }}
-        project: {{ project }}
+        project: {{ project | to_json() }}
     - require:
 {% for repo in project.repos %}
       - cmd: git-diff--{{ code_dir }}/{{ repo.name }}
