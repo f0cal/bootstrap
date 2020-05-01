@@ -37,7 +37,7 @@ git-diff--{{ code_dir }}/{{ repo.name }}:
 
 project-add:
   cmd.run:
-    - name: git -C {{ code_dir }} add {{ code_dir }}/project.yml
+    - name: git -C {{ code_dir }} add project.yml
     - require:
         - file: {{ code_dir }}/project.yml
 
