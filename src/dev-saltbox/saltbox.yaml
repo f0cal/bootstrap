@@ -70,6 +70,7 @@ formulas:
         type: "__import__('os').path.abspath"
       - name: git_args
         nargs: "..." # This is == argparse.REMAINDER
+        type: "__import__('shlex').quote"
 
   - name: env
     descr: "Walks on project.yml and populates the build environment"
@@ -119,3 +120,18 @@ formulas:
         type: "__import__('os').path.abspath"
       - name: ["-i", "--integration-tests"]
         default: False
+
+  - name: push
+    config:
+      master: False
+      minion: False
+    template: |
+      salt-call
+        --local \
+        state.sls _states.push \
+        saltenv={{ saltbox.formula.saltenv }} \
+        pillar='{{ {"cli": saltbox.cli} | tojson() }}'
+    saltenv: f0cal.bootstrap.dev
+    args:
+      - name: code_dir
+        type: "__import__('os').path.abspath"
