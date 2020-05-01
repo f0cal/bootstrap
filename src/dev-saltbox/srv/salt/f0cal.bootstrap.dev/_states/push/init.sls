@@ -17,6 +17,7 @@ git-diff--{{ code_dir }}/{{ repo.name }}:
     - makedirs: True
     - template: jinja
     - context:
+        code_dir: {{ code_dir }}
         project: {{ project }}
     - require:
 {% for repo in project.repos %}

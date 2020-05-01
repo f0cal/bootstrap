@@ -1,5 +1,7 @@
 {% for repo in project.repos %}
-{% set repo.rev = salt['cmd.run']("git rev-parse --verify --short HEAD", cwd=path) %}
+{% set cmd = "git -C %s/%s rev-parse --verify --short HEAD" | join(code_dir, repo.name) %}
+{% set rev = salt['cmd.run']() %}
+{% do repo.update({'rev': rev})
 {% endfor %}
 
 {{ project }}
