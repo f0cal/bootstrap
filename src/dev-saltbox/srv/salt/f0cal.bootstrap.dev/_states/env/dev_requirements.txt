@@ -1,4 +1,6 @@
-f0cal.farm.client
-f0cal.my-code
-f0cal.my-device
-f0cal.service.device_farm
+saltbox.f0cal.bootstrap.project
+saltbox.f0cal.bootstrap.cluster
+# The below namespaces need to be pulled out into their own packages
+# They're current nested under saltbox.f0cal.bootstrap.cluster
+# saltbox.f0cal.bootstrap.client
+# saltbox.f0cal.bootstrap.api
