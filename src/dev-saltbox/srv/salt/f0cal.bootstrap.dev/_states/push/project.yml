@@ -1,0 +1,5 @@
+{% for repo in project.repos %}
+{% set repo.rev = salt['cmd.run']("git rev-parse --verify --short HEAD", cwd=path) %}
+{% endfor %}
+
+{{ project }}
