@@ -1,10 +1,1 @@
-{% for repo in project.repos %}
-{% set cmd = "git -C %s/%s rev-parse --verify --short HEAD" | format(code_dir, repo.name) %}
-{% set rev = salt['cmd.run'](cmd) %}
-{% do repo.update({'rev': rev}) %}
-{% set cmd = "git -C %s/%s rev-parse --abbrev-ref HEAD" | format(code_dir, repo.name) %}
-{% set branch = salt['cmd.run'](cmd) %}
-{% do repo.update({'branch': branch}) %}
-{% endfor %}
-
 {{ project | yaml(False) }}
