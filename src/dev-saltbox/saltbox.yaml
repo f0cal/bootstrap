@@ -3,13 +3,14 @@ name: f0cal.bootstrap.dev
 formulas:
 
   - name: all
-    descr: "Runs init, clone, env, test"
+    descr: "[init, clone, env]"
     config:
       master: False
       minion: False
     template: |
       salt-call
         --local \
+        --retcode-passthrough \
         state.sls _orch.all \
         saltenv={{ saltbox.formula.saltenv }} \
         pillar='{{ {"cli": saltbox.cli} | tojson() }}'
@@ -27,6 +28,7 @@ formulas:
     template: |
       salt-call
         --local \
+        --retcode-passthrough \
         state.sls _states.project \
         saltenv={{ saltbox.formula.saltenv }} \
         pillar='{{ {"cli": saltbox.cli} | tojson() }}'
@@ -44,6 +46,7 @@ formulas:
     template: |
       salt-call
         --local \
+        --retcode-passthrough \
         state.sls _states.clone \
         saltenv={{ saltbox.formula.saltenv }} \
         pillar='{{ {"cli": saltbox.cli} | tojson() }}'
@@ -61,6 +64,7 @@ formulas:
     template: |
       salt-call
         --local \
+        --retcode-passthrough \
         state.sls _states.git \
         saltenv={{ saltbox.formula.saltenv }} \
         pillar='{{ {"cli": saltbox.cli} | tojson() }}'
@@ -80,6 +84,7 @@ formulas:
     template: |
       salt-call
         --local \
+        --retcode-passthrough \
         state.sls _states.env \
         saltenv={{ saltbox.formula.saltenv }} \
         pillar='{{ {"cli": saltbox.cli} | tojson() }}'
@@ -87,6 +92,8 @@ formulas:
     args:
       - name: code_dir
         type: "__import__('os').path.abspath"
+      - name: ["-e", "--env"]
+        default: dev
 
   # - name: status
   #   config:
@@ -104,24 +111,25 @@ formulas:
   #       type: "__import__('os').path.abspath"
   #     - name: ["-u", "--git-url"]
 
-  - name: test
-    config:
-      master: False
-      minion: False
-    template: |
-      salt-call
-        --local \
-        state.sls _states.test \
-        saltenv={{ saltbox.formula.saltenv }} \
-        pillar='{{ {"cli": saltbox.cli} | tojson() }}'
-    saltenv: f0cal.bootstrap.dev
-    args:
-      - name: code_dir
-        type: "__import__('os').path.abspath"
-      - name: ["-i", "--integration-tests"]
-        default: False
+  # - name: test
+  #   config:
+  #     master: False
+  #     minion: False
+  #   template: |
+  #     salt-call
+  #       --local \
+  #       state.sls _states.test \
+  #       saltenv={{ saltbox.formula.saltenv }} \
+  #       pillar='{{ {"cli": saltbox.cli} | tojson() }}'
+  #   saltenv: f0cal.bootstrap.dev
+  #   args:
+  #     - name: code_dir
+  #       type: "__import__('os').path.abspath"
+  #     - name: ["-i", "--integration-tests"]
+  #       default: False
 
   - name: push
+    descr: "Push all branches; update project.yml with commit hashes; push project.yml"
     config:
       master: False
       minion: False

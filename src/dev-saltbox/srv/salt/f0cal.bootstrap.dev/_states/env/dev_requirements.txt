@@ -1,6 +1,3 @@
-saltbox.f0cal.bootstrap.project
-saltbox.f0cal.bootstrap.cluster
-# The below namespaces need to be pulled out into their own packages
-# They're current nested under saltbox.f0cal.bootstrap.cluster
-# saltbox.f0cal.bootstrap.client
-# saltbox.f0cal.bootstrap.api
+{% for egg in env.eggs %}
+{{ egg }}
+{% endfor %}

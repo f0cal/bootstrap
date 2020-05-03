@@ -1,5 +1,6 @@
 {% set code_dir = pillar['cli']['code_dir'] %}
 {% set allow_unclean = salt['pillar.get']("cli:allow_unclean") %}
+
 {% set project_yml = "%s/project.yml" | format(code_dir) %}
 {% set project = salt["file.read"](project_yml) | load_yaml %}
 

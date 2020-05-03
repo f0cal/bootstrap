@@ -1,18 +1,23 @@
-{% set cwd = pillar["cli"]["cwd"] %}
-{% set code_dir = salt['pillar.get']("cli:code_dir", cwd) %}
-{% set venv_dir = "%s/_venv" | format(code_dir) %}
-{% set skip_list = salt['pillar.get']("cli:skip", None) %}
-{% set python_exe = salt['pillar.get']("cli:python", "/usr/bin/python3") %}
-{% set requirements_file = "%s/_cache/dev/requirements.txt" | format(code_dir) %}
-{% set constraints_file = "%s/_cache/dev/constraints.txt" | format(code_dir) %}
-{% set setup_file = "%s/_cache/dev/setup_requirements.txt" | format(code_dir) %}
-{% set pip_exe = "%s/bin/pip" | format(venv_dir) %}
-{% set temp_dir = salt['temp.dir']() %}
+{% set env_name = pillar["cli"]["env"] %}
+{% set python_exe = salt['pillar.get']("cli:python", "/usr/bin/python3.7") %}
 
-venv_bin:
+{% set code_dir = pillar["cli"]["code_dir"] %}
+{% set project = salt['file.read']("%s/project.yml"|format(code_dir)) | load_yaml %}
+
+{% set env = project.envs | selectattr("name", "equalto", env_name) | first %}
+{% set envs_default = project.envs_default %}
+{% do envs_default.update(env) %}
+{% set env = envs_default %}
+
+{% set venv_dir = "%s/%s" | format(code_dir, env.path) %}
+{% set build_dir = "%s/_cache/%s" | format(code_dir, env_name) %}
+
+{% set skip_list = salt['pillar.get']("cli:skip", None) %}
+{% set pip_exe = "%s/bin/pip" | format(venv_dir) %}
+
+{{ build_dir }}/.pyvenv:
   file.managed:
     - makedirs: True
-    - name: {{ temp_dir }}/.pyvenv
     - mode: 777
     - contents: |
         #! /bin/bash
@@ -20,46 +25,57 @@ venv_bin:
 
 {{ venv_dir }}:
   virtualenv.managed:
-    - venv_bin: {{ temp_dir }}/.pyvenv
+    - venv_bin: {{ build_dir }}/.pyvenv
     - require:
-        - file: {{ temp_dir }}/.pyvenv
+        - file: {{ build_dir }}/.pyvenv
 
-{{ requirements_file }}:
+{{ build_dir }}/setup_requirements.txt:
   file.managed:
-    - source: salt://{{ tpldir }}/dev_requirements.txt
+    - source: salt://{{ slspath }}/setup_requirements.txt
+    - makedirs: True
+    - template: jinja
+    - context:
+        project: {{ project | tojson() }}
+        env: {{ env | tojson() }}
+
+{{ build_dir }}/requirements.txt:
+  file.managed:
+    - source: salt://{{ slspath }}/dev_requirements.txt
     - template: jinja
     - makedirs: True
+    - context:
+        project: {{ project | tojson() }}
+        env: {{ env | tojson() }}
 
-{{ constraints_file }}:
+{{ build_dir }}/constraints.txt:
   file.managed:
-    - source: salt://{{ tpldir }}/dev_constraints.txt
+    - source: salt://{{ slspath }}/dev_constraints.txt
     - template: jinja
     - makedirs: True
-
-{{ setup_file }}:
-  file.managed:
-    - source: salt://{{ tpldir }}/setup_requirements.txt
-    - template: jinja
-    - makedirs: True
+    - context:
+        project: {{ project | tojson() }}
+        env: {{ env | tojson() }}
 
 pip_upgrade:
   cmd.run:
     - name: {{ pip_exe }} install --upgrade pip wheel
+    - require:
+        - virtualenv: {{ venv_dir }}
 
 setup_pip_install:
   cmd.run:
-    - name : {{ pip_exe }} install -r {{ setup_file }}
+    - name : {{ pip_exe }} install -r {{ build_dir }}/setup_requirements.txt
     - require:
-        - file: {{ setup_file }}
+        - file: {{ build_dir }}/setup_requirements.txt
         - cmd: pip_upgrade
 
 pip_install:
   cmd.run:
-    - name: {{ pip_exe }} install -r {{ requirements_file }} -c {{ constraints_file }}
+    - name: {{ pip_exe }} install -r {{ build_dir }}/requirements.txt -c {{ build_dir }}/constraints.txt
     - cwd: {{ code_dir }}
     - require:
-        - file: {{ requirements_file }}
-        - file: {{ constraints_file }}
+        - file: {{ build_dir }}/requirements.txt
+        - file: {{ build_dir }}/constraints.txt
         - cmd: setup_pip_install
         - cmd: pip_upgrade
     - env:

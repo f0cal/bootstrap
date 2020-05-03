@@ -27,15 +27,15 @@ env:
     - require:
         - salt: clone
 
-test:
-  salt.runner:
-    - name: state.orchestrate
-    - arg:
-        - _states.test
-    - pillar: {{ pillar | tojson() }}
-    - saltenv: {{ saltenv }}
-    - require:
-        - salt: env
+# test:
+#   salt.runner:
+#     - name: state.orchestrate
+#     - arg:
+#         - _states.test
+#     - pillar: {{ pillar | tojson() }}
+#     - saltenv: {{ saltenv }}
+#     - require:
+#         - salt: env
 
 # TODO: Re-enable after fixing these tests
 # TODO: ensure optional so we can test that bootstrapped install runs without the tests.
@@ -44,7 +44,7 @@ test:
 #     - name: state.orchestrate
 #     - arg:
 #         - integration_tests
-#     - pillar: {{ pillar }}
+#     - pillar: {{ pillar | tojson() }}
 #     - saltenv: {{ saltenv }}
 #     - require:
 #         - salt: install_repos
@@ -56,7 +56,7 @@ test:
 #     - name: state.orchestrate
 #     - arg:
 #         - git_push
-#     - pillar: {{ pillar }}
+#     - pillar: {{ pillar | tojson() }}
 #     - saltenv: {{ saltenv }}
 #     - require:
 #         - salt: run_integration_tests
@@ -66,7 +66,7 @@ test:
 #     - name: state.orchestrate
 #     - arg:
 #         - pypi_push
-#     - pillar: {{ pillar }}
+#     - pillar: {{ pillar| tojson() }}
 #     - saltenv: {{ saltenv }}
 #     - require:
 #         - salt: git_push
