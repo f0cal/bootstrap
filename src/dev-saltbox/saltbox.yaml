@@ -2,6 +2,23 @@ name: f0cal.bootstrap.dev
 
 formulas:
 
+  - name: install
+    descr: "Expose to stateful salt workflows"
+    config:
+      master: False
+      minion: False
+    template: |
+      salt-call
+        --local \
+        --retcode-passthrough \
+        state.sls _orch.does_not_exist_on_purpose \
+        saltenv={{ saltbox.formula.saltenv }} \
+        pillar='{{ {"cli": saltbox.cli} | tojson() }}'
+    saltenv: f0cal.bootstrap.dev
+    args:
+      - name: code_dir
+        type: "__import__('os').path.abspath"
+
   - name: all
     descr: "[init, clone, env]"
     config:
@@ -94,6 +111,7 @@ formulas:
         type: "__import__('os').path.abspath"
       - name: ["-e", "--env"]
         default: dev
+      - name: ["-p", "--project-yaml"]
 
   # - name: status
   #   config:

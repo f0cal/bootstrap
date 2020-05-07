@@ -1,8 +1,15 @@
+
 {% set env_name = pillar["cli"]["env"] %}
-{% set python_exe = salt['pillar.get']("cli:python", "/usr/bin/python3.7") %}
+{% set python_exe = salt['pillar.get']("cli:python", "python3.7") %}
 
 {% set code_dir = pillar["cli"]["code_dir"] %}
-{% set project = salt['file.read']("%s/project.yml"|format(code_dir)) | load_yaml %}
+{% set proj_path = salt['pillar.get']("cli:project_yaml") %}
+
+{% if proj_path is none %}
+{% set proj_path = "%s/project.yml"|format(code_dir) %}
+{% endif %}
+
+{% set project = salt['file.read'](proj_path) | load_yaml %}
 
 {% set env = project.envs | selectattr("name", "equalto", env_name) | first %}
 {% set envs_default = project.envs_default %}
@@ -14,6 +21,8 @@
 
 {% set skip_list = salt['pillar.get']("cli:skip", None) %}
 {% set pip_exe = "%s/bin/pip" | format(venv_dir) %}
+
+# {{ env }}
 
 {{ build_dir }}/.pyvenv:
   file.managed:
@@ -37,6 +46,7 @@
     - context:
         project: {{ project | tojson() }}
         env: {{ env | tojson() }}
+        code_dir: {{ code_dir }}
 
 {{ build_dir }}/requirements.txt:
   file.managed:
@@ -46,6 +56,7 @@
     - context:
         project: {{ project | tojson() }}
         env: {{ env | tojson() }}
+        code_dir: {{ code_dir }}
 
 {{ build_dir }}/constraints.txt:
   file.managed:
@@ -55,10 +66,11 @@
     - context:
         project: {{ project | tojson() }}
         env: {{ env | tojson() }}
+        code_dir: {{ code_dir }}
 
 pip_upgrade:
   cmd.run:
-    - name: {{ pip_exe }} install --upgrade pip wheel
+    - name: {{ pip_exe }} install --upgrade pip wheel setuptools
     - require:
         - virtualenv: {{ venv_dir }}
 
