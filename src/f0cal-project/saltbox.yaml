@@ -1,4 +1,4 @@
-name: f0cal.bootstrap.dev
+name: saltbox.f0cal.project
 
 formulas:
 
@@ -14,7 +14,7 @@ formulas:
         state.sls _orch.does_not_exist_on_purpose \
         saltenv={{ saltbox.formula.saltenv }} \
         pillar='{{ {"cli": saltbox.cli} | tojson() }}'
-    saltenv: f0cal.bootstrap.dev
+    saltenv: saltbox.f0cal.project
     args:
       - name: code_dir
         type: "__import__('os').path.abspath"
@@ -31,7 +31,7 @@ formulas:
         state.sls _orch.all \
         saltenv={{ saltbox.formula.saltenv }} \
         pillar='{{ {"cli": saltbox.cli} | tojson() }}'
-    saltenv: f0cal.bootstrap.dev
+    saltenv: saltbox.f0cal.project
     args:
       - name: code_dir
         type: "__import__('os').path.abspath"
@@ -49,13 +49,13 @@ formulas:
         state.sls _states.project \
         saltenv={{ saltbox.formula.saltenv }} \
         pillar='{{ {"cli": saltbox.cli} | tojson() }}'
-    saltenv: f0cal.bootstrap.dev
+    saltenv: saltbox.f0cal.project
     args:
       - name: code_dir
         type: "__import__('os').path.abspath"
       - name: ["-u", "--git-url"]
 
-  - name: clone
+  - name: git-clone
     descr: "Walks on project.yml and populates the project sources accordingly"
     config:
       master: False
@@ -67,7 +67,7 @@ formulas:
         state.sls _states.clone \
         saltenv={{ saltbox.formula.saltenv }} \
         pillar='{{ {"cli": saltbox.cli} | tojson() }}'
-    saltenv: f0cal.bootstrap.dev
+    saltenv: saltbox.f0cal.project
     args:
       - name: code_dir
         type: "__import__('os').path.abspath"
@@ -75,8 +75,8 @@ formulas:
       - name: ["--https-user"]
       - name: ["--allow-unclean"]
 
-  - name: git
-    descr: "Walks on project.yml and branches all repos"
+  - name: git-cmd
+    descr: "Walks on project.yml and runs 'git {cmd}' on all repos"
     config:
       master: False
       minion: False
@@ -87,13 +87,13 @@ formulas:
         state.sls _states.git \
         saltenv={{ saltbox.formula.saltenv }} \
         pillar='{{ {"cli": saltbox.cli} | tojson() }}'
-    saltenv: f0cal.bootstrap.dev
+    saltenv: saltbox.f0cal.project
     args:
       - name: code_dir
         type: "__import__('os').path.abspath"
       - name: git_args
         nargs: "..." # This is == argparse.REMAINDER
-        type: "__import__('shlex').quote"
+        type: "lambda argstr: __import__('shlex').quote(argstr) if 'push' not in argstr else ValueError(argstr)"
 
   - name: env
     descr: "Walks on project.yml and populates the build environment"
@@ -107,7 +107,7 @@ formulas:
         state.sls _states.env \
         saltenv={{ saltbox.formula.saltenv }} \
         pillar='{{ {"cli": saltbox.cli} | tojson() }}'
-    saltenv: f0cal.bootstrap.dev
+    saltenv: saltbox.f0cal.project
     args:
       - name: code_dir
         type: "__import__('os').path.abspath"
@@ -115,40 +115,7 @@ formulas:
         default: dev
       - name: ["-p", "--project-yaml"]
 
-  # - name: status
-  #   config:
-  #     master: False
-  #     minion: False
-  #   template: |
-  #     salt-call
-  #       --local \
-  #       state.sls _states.status \
-  #       saltenv={{ saltbox.formula.saltenv }} \
-  #       pillar='{{ {"cli": saltbox.cli} | tojson() }}'
-  #   saltenv: f0cal.bootstrap.dev
-  #   args:
-  #     - name: code_dir
-  #       type: "__import__('os').path.abspath"
-  #     - name: ["-u", "--git-url"]
-
-  # - name: test
-  #   config:
-  #     master: False
-  #     minion: False
-  #   template: |
-  #     salt-call
-  #       --local \
-  #       state.sls _states.test \
-  #       saltenv={{ saltbox.formula.saltenv }} \
-  #       pillar='{{ {"cli": saltbox.cli} | tojson() }}'
-  #   saltenv: f0cal.bootstrap.dev
-  #   args:
-  #     - name: code_dir
-  #       type: "__import__('os').path.abspath"
-  #     - name: ["-i", "--integration-tests"]
-  #       default: False
-
-  - name: push
+  - name: git-push
     descr: "Push all branches; update project.yml with commit hashes; push project.yml"
     config:
       master: False
@@ -159,7 +126,7 @@ formulas:
         state.sls _states.push \
         saltenv={{ saltbox.formula.saltenv }} \
         pillar='{{ {"cli": saltbox.cli} | tojson() }}'
-    saltenv: f0cal.bootstrap.dev
+    saltenv: saltbox.f0cal.project
     args:
       - name: code_dir
         type: "__import__('os').path.abspath"
