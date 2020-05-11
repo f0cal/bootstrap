@@ -1,4 +1,0 @@
-{% set skips = salt['pillar.get']("cli:skip", []) %}
-{% if "farm" not in skips %}f0cal.farm.client{% endif %}
-{% if "my-code" not in skips %}f0cal.my-code{% endif %}
-{% if "my-device" not in skips %}f0cal.my-device{% endif %}
