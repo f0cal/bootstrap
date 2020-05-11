@@ -1,3 +1,7 @@
-{% for req in env.get('reqs', []) %}
+{% import "_macros/project/project_yaml.jinja" as Project with context %}
+
+{%- for env in Project.with_defaults(project, "envs") | load_yaml -%}
+{%- for req in env.get("reqs", []) %}
 {{ req }}
-{% endfor %}
+{% endfor -%}
+{%- endfor -%}

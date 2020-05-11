@@ -1,13 +1,14 @@
-{% set code_dir = "${PWD}" %}
+{% import "_macros/project/project_yaml.jinja" as Project with context %}
 
-{%- for egg in project.eggs -%}
-{% set name = egg.name %}
-{% set repo = egg.repo %}
-{% set subdir = "" %}
-{% if egg.get("subdir", None ) %}
-{% set subdir = "&subdirectory=%s" | format(egg.subdir) %}
-{% endif %}
+{%- for egg in Project.with_defaults(project, "eggs") | load_yaml -%}
 
--e file://{{ code_dir }}/{{ egg.repo }}#egg={{ egg.name }}{{ subdir }}
+{%- set name = egg.name -%}
+{%- for repo in egg.repos -%}
 
+{%- set subdir = "" -%}
+{%- if egg.get("subdir", None ) -%}
+{%- set subdir = "&subdirectory=%s" | format(egg.subdir) -%}
+{%- endif %}
+-e file://{{ project.code_dir }}/{{ egg.repos[0] }}#egg={{ egg.name }}{{ subdir }}
+{% endfor -%}
 {%- endfor -%}

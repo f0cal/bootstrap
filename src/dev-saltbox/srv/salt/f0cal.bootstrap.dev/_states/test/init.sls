@@ -1,11 +1,7 @@
-{% set code_dir = pillar['cli']['code_dir'] %}
-{% set project_yml = "%s/project.yml" | format(code_dir) %}
-{% set project = salt["file.read"](project_yml) | load_yaml %}
-
-{% set defaults = project.tests_default %}
+{% import "_macros/project/project_yaml.jinja" as Project with context %}
+{% set project = Project.from_env() %}
 
 {% for test in project.tests %}
-{% set run = test.get("run", defaults.get("run", None)) %}
 {% if run %}
 
 test-{{ loop.index }}:
@@ -23,8 +19,6 @@ test-{{ loop.index }}:
 {% endif %}
 {% endfor %}
 
-{% for test in project.tests %}
-{% set script = test.get("script", defaults.get("script", None)) %}
 {% if script %}
 {% set script_name = salt["temp.file"]() %}
 

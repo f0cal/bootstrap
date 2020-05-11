@@ -1,28 +1,15 @@
+{% import "_macros/project/project_yaml.jinja" as Project with context %}
+{% set project = Project.from_env() | load_yaml %}
 
-{% set env_name = pillar["cli"]["env"] %}
 {% set python_exe = salt['pillar.get']("cli:python", "python3.7") %}
 
-{% set code_dir = pillar["cli"]["code_dir"] %}
-{% set proj_path = salt['pillar.get']("cli:project_yaml") %}
+{% set project = Project.reduce(project, "envs", pillar["cli"]["env"]) | load_yaml %}
 
-{% if proj_path is none %}
-{% set proj_path = "%s/project.yml"|format(code_dir) %}
-{% endif %}
+{% for env in Project.with_defaults(project, "envs") | load_yaml %}
 
-{% set project = salt['file.read'](proj_path) | load_yaml %}
-
-{% set env = project.envs | selectattr("name", "equalto", env_name) | first %}
-{% set envs_default = project.envs_default %}
-{% do envs_default.update(env) %}
-{% set env = envs_default %}
-
-{% set venv_dir = "%s/%s" | format(code_dir, env.path) %}
-{% set build_dir = "%s/_cache/%s" | format(code_dir, env_name) %}
-
-{% set skip_list = salt['pillar.get']("cli:skip", None) %}
-{% set pip_exe = "%s/bin/pip" | format(venv_dir) %}
-
-# {{ env }}
+{% set env_path = Project.abspath(env.path)  %}
+{% set build_dir = Project.abspath(Project.build_dir(env.name, slspath)) %}
+{% set pip_exe = "%s/bin/pip" | format(env_path) %}
 
 {{ build_dir }}/.pyvenv:
   file.managed:
@@ -32,7 +19,7 @@
         #! /bin/bash
         {{ python_exe }} -m venv $@
 
-{{ venv_dir }}:
+{{ env_path }}:
   virtualenv.managed:
     - venv_bin: {{ build_dir }}/.pyvenv
     - require:
@@ -45,8 +32,6 @@
     - template: jinja
     - context:
         project: {{ project | tojson() }}
-        env: {{ env | tojson() }}
-        code_dir: {{ code_dir }}
 
 {{ build_dir }}/requirements.txt:
   file.managed:
@@ -55,8 +40,6 @@
     - makedirs: True
     - context:
         project: {{ project | tojson() }}
-        env: {{ env | tojson() }}
-        code_dir: {{ code_dir }}
 
 {{ build_dir }}/constraints.txt:
   file.managed:
@@ -65,18 +48,18 @@
     - makedirs: True
     - context:
         project: {{ project | tojson() }}
-        env: {{ env | tojson() }}
-        code_dir: {{ code_dir }}
 
 pip_upgrade:
   cmd.run:
     - name: {{ pip_exe }} install --upgrade pip wheel setuptools
+    - cwd: {{ project.code_dir }}
     - require:
-        - virtualenv: {{ venv_dir }}
+        - virtualenv: {{ env_path }}
 
 setup_pip_install:
   cmd.run:
     - name : {{ pip_exe }} install -r {{ build_dir }}/setup_requirements.txt
+    - cwd: {{ project.code_dir }}
     - require:
         - file: {{ build_dir }}/setup_requirements.txt
         - cmd: pip_upgrade
@@ -84,7 +67,7 @@ setup_pip_install:
 pip_install:
   cmd.run:
     - name: {{ pip_exe }} install -r {{ build_dir }}/requirements.txt -c {{ build_dir }}/constraints.txt
-    - cwd: {{ code_dir }}
+    - cwd: {{ project.code_dir }}
     - require:
         - file: {{ build_dir }}/requirements.txt
         - file: {{ build_dir }}/constraints.txt
@@ -93,3 +76,5 @@ pip_install:
     - env:
         - LC_CTYPE: 'en_US.UTF-8'
         - LANG: 'en_US.UTF-8'
+
+{% endfor %}

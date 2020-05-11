@@ -1,0 +1,136 @@
+{% macro from_env() %}
+  {% set code_dir = pillar["cli"]["code_dir"] %}
+  {% set default_proj_path = "%s/project.yml"|format(code_dir) %}
+  {% set proj_path = salt['pillar.get']("cli:project_path", default_proj_path) %}
+  {% set project = salt['file.read'](proj_path) | load_yaml %}
+  {% do project.update({'code_dir': code_dir}) %}
+{{ project | yaml(false) }}
+{% endmacro %}
+
+{% macro _filter(blob, field, value) %}
+  {%- set field_values = blob[field] -%}
+  {%- set default = blob["%s_default"|format(field)] -%}
+  {%- set selected = field_values | selectattr("name", "equalto", value) | first -%}
+  {%- do default.update(selected) -%}
+  {{- default | yaml(false) -}}
+{% endmacro %}
+
+{% macro build_dir(sls_path, key) %}
+  {{- "_cache/%s/%s" | format(sls_path, key) -}}
+{% endmacro %}
+
+{% macro abspath(path) %}
+  {%- set code_dir = pillar["cli"]["code_dir"] -%}
+  {{- "%s/%s" | format(code_dir, path) -}}
+{% endmacro %}
+
+{# {% macro foo() %} #}
+{#   {% set eggs = [] %} #}
+{#   {% for env in image.envs %} #}
+{#     {% set _env = project.envs | selectattr("name", "equalto", env.name) | first %} #}
+{#     {% do eggs.extend(_env.eggs) %} #}
+{#   {% endfor %} #}
+{#   {% do image.update({'eggs': eggs}) %} #}
+{#   {% set repos = [] %} #}
+{#   {% for egg in image.eggs %} #}
+{#     {% set _egg = project.eggs | selectattr("name", "equalto", egg.name) | first %} #}
+{#     {% do repos.extend([{'name': _egg.repo}]) %} #}
+{#   {% endfor %} #}
+{#   {% do image.update({'repos': repos}) %} #}
+{#   {% do image.update({'envs_default': project.envs_default}) %} #}
+{#   {% do image.update({'repos_default': project.repos_default}) %} #}
+{#   {{ image | yaml(False) }} #}
+{# {% endmacro %} #}
+
+{# def _reduce2(blob, field, names): #}
+{#     if isinstance(names, str): #}
+{#         names = [names] #}
+{#     blob[field] = [d for d in blob[field] if d['name'] in names] #}
+{#     subfield = LOOKUP.get(field, None) #}
+{#     if subfield is None: #}
+{#         return #}
+{#     subd = sum([d[subfield] for d in blob[field]], []) #}
+{#     subnames = subd #}
+{#     _reduce2(blob, subfield, subnames) #}
+
+{% set LOOKUP = {"images": "envs", "envs": "eggs", "eggs": "repos"} %}
+{% macro _reduce(blob, field, names) %}
+  {% if names is string %}
+    {% set names = [names] %}
+  {% endif %}
+  {% set selected = blob[field] | selectattr('name', 'in', names) | list %}
+  {% do blob.update({field: selected}) %}
+  {% set subfield = LOOKUP.get(field, None) %}
+  {% if not subfield is none %}
+    {% set subnames = blob[field] | map(attribute=subfield) | sum(start=[]) | list %}
+    {% do _reduce(blob, subfield, subnames) %}
+  {% endif %}
+{% endmacro %}
+
+{% macro reduce(blob, field, names) %}
+  {%- set blob = blob.copy() -%}
+  {%- do _reduce(blob, field, names) -%}
+  {{- blob | yaml(false) -}}
+{% endmacro %}
+
+{% macro with_defaults(blob, field) %}
+  {%- set field_values = blob[field] -%}
+  {%- set default = blob["%s_default"|format(field)] -%}
+  {%- set new_values = [] -%}
+  {%- for subblob in field_values -%}
+    {%- set default_copy = default.copy() -%}
+    {%- do default_copy.update(subblob) -%}
+    {%- do new_values.append(default_copy) -%}
+  {%- endfor -%}
+  {{- new_values | yaml(false) -}}
+{% endmacro %}
+
+{# {% macro from_file(filename) %} #}
+{# {{ salt['file.read'](filename) }} #}
+{# {% endmacro %} #}
+
+{# {% macro extend_base(image, base_image) %} #}
+{#   {% set overlays = {} %} #}
+{#   {% for old_part_name, old_part_dict in base_image.overlays.items() %} #}
+{#     {% set new_part_name = old_part_name.replace(base_image.name, image.name) %} #}
+{#     {% set lower = old_part_dict.lower + [old_part_dict.upper] %} #}
+{#     {% set upper = old_part_dict.upper.replace(base_image.name, image.name) %} #}
+{#     {% set work = old_part_dict.work.replace(base_image.name, image.name) %} #}
+{#     {% set new_part_dict = {'lower': lower, 'upper': upper, 'work': work} %} #}
+{#     {% do overlays.update({new_part_name: new_part_dict}) %} #}
+{#   {% endfor %} #}
+{#   {% set out = image.copy() %} #}
+{#   {% do out.update(overlays=overlays) %} #}
+{#   {{ out }} #}
+{# {% endmacro %} #}
+
+{# {% macro create_base(name, parts) %} #}
+{#   {% set out = {'name': name} %} #}
+{#     {\# base_image only  #\}  #}
+{#     {% set overlays = {} %}  #}
+{#     {% for part in parts %}  #}
+{#       {% set part = [name, part] | join("/") %}  #}
+{#       {% set lower = [] %}  #}
+{#       {% set upper = "%s.upper" | format(part) %}  #}
+{#       {% set work = "%s.work" | format(part) %}  #}
+{#       {% set part_dict = {'lower': lower, 'upper': upper, 'work': work} %}  #}
+{#       {% do overlays.update({part: part_dict})  %}  #}
+{#     {% endfor %}  #}
+{#     {% do out.update(overlays=overlays) %}  #}
+{# {{ out }} #}
+{# {% endmacro %} #}
+
+{# {% macro abspaths(image, image_root) %} #}
+{#   {% set out = image.copy() %} #}
+{#       {% set overlays = {} %}  #}
+{#       {% for old_part_name, part_dict in image.overlays.items() %}  #}
+{#         {% set new_part_name = "%s/%s" | format(image_root, old_part_name)  %}  #}
+{#         {% set lower = part_dict.lower | map('regex_replace', '^(.*)$', image_root+'/\\1') | list %}  #}
+{#         {% set upper = "%s/%s" | format(image_root, part_dict.upper) %}  #}
+{#         {% set work = "%s/%s" | format(image_root, part_dict.work) %}  #}
+{#         {% set new_part_dict = {'lower': lower, 'upper': upper, 'work': work} %}  #}
+{#         {% do overlays.update({new_part_name: new_part_dict})  %}  #}
+{#       {% endfor %}  #}
+{#       {% do out.update(overlays=overlays) %}  #}
+{# {{ out }} #}
+{# {% endmacro %} #}

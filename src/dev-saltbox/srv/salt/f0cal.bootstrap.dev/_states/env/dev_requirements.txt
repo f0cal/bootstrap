@@ -1,3 +1,5 @@
-{% for egg in env.eggs %}
-{{ egg }}
-{% endfor %}
+{% import "_macros/project/project_yaml.jinja" as Project with context %}
+
+{%- for egg in Project.with_defaults(project, "eggs") | load_yaml %}
+{{ egg.name }}
+{% endfor -%}

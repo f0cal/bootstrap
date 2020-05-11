@@ -72,6 +72,8 @@ formulas:
       - name: code_dir
         type: "__import__('os').path.abspath"
       - name: ["-u", "--git-url"]
+      - name: ["--https-user"]
+      - name: ["--allow-unclean"]
 
   - name: git
     descr: "Walks on project.yml and branches all repos"

@@ -1,6 +1,5 @@
-{% set code_dir = pillar['cli']['code_dir'] %}
-{% set project_yml = "%s/project.yml" | format(code_dir) %}
-{% set project = salt["file.read"](project_yml) | load_yaml %}
+{% import "_macros/project/project_yaml.jinja" as Project with context %}
+{% set project = Project.from_env() %}
 
 {% set out_dir = "%s/_pypi" | format(code_dir) %}
 

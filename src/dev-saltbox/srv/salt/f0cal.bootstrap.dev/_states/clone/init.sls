@@ -1,17 +1,13 @@
-{% set code_dir = pillar['cli']['code_dir'] %}
-{% set allow_unclean = salt['pillar.get']("cli:allow_unclean") %}
+{% set allow_unclean = pillar['cli']['allow_unclean'] %}
+{% set https_user = pillar['cli']['https_user'] %}
 
-{% set project_yml = "%s/project.yml" | format(code_dir) %}
-{% set project = salt["file.read"](project_yml) | load_yaml %}
-
-{% set defaults = project.repos_default %}
-
+{% import "_macros/project/project_yaml.jinja" as Project with context %}
+{% set project = Project.from_env() | load_yaml %}
 {% for repo in project.repos %}
-{% set name = repo.get("name", defaults.get("name", None)) %}
-{% set branch = repo.get("branch", defaults.get("branch", None)) %}
-{% set https_user = repo.get("https_user", defaults.get("https_user", None)) %}
-{% set url = repo.get("url", defaults.get("url", None)) %}
-{% set path = "%s/%s" | format(code_dir, name) %}
+{% set url = repo.url %}
+{% set name = repo.name %}
+{% set path = Project.abspath(name) %}
+{% set branch = repo.branch %}
 
 {{ url }}:
   git.cloned:
@@ -31,4 +27,6 @@ repo-{{ name }}-is-porcelain--before:
     - name: test -z "$(git status --porcelain)"
     - cwd: {{ path }}
 {% endif %}
+
+
 {% endfor %}
