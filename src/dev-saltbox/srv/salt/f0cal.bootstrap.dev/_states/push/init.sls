@@ -1,5 +1,7 @@
 {% import "_macros/project/project_yaml.jinja" as Project with context %}
-{% set project = Project.from_env() %}
+{% set project = Project.from_env() | load_yaml %}
+
+{% set code_dir = project.code_dir %}
 
 {%- for repo in project.repos -%}
 {% set cmd = "git -C %s/%s rev-parse --verify --short HEAD" | format(code_dir, repo.name) %}
