@@ -1,7 +1,7 @@
 {% import "_macros/project/project_yaml.jinja" as Project with context %}
 {% set project = Project.from_env() | load_yaml %}
 
-{% set python_exe = salt['pillar.get']("cli:python", "python3.7") %}
+{% set python_exe = salt['pillar.get']("cli:python", "/usr/bin/python3.7") %}
 
 {% set project = Project.reduce(project, "envs", pillar["cli"]["env"]) | load_yaml %}
 
