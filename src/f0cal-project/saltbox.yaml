@@ -73,12 +73,10 @@ formulas:
         type: "__import__('os').path.abspath"
       - name: ["-u", "--git-url"]
       - name: ["--https-user"]
+        default: None
       - name: ["--https-pass"]
-        action: store_const
-        const: "__import__('getpass').getpass('git password?')"
-      - name: ["--allow-unclean"]
-        default: False
-        action: store_true
+        default: None
+        type: "lambda _pass: __import__('getpass').getpass('git password?') if _pass == '-' else _pass"
 
   - name: git-cmd
     descr: "Walks on project.yml and runs 'git {cmd}' on all repos"
