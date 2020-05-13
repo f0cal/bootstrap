@@ -1,3 +1,5 @@
+{% set commit_message = pillar['cli']['message'] %}
+
 {% import "_macros/project/project_yaml.jinja" as Project with context %}
 {% set project = Project.from_env() | load_yaml %}
 
@@ -44,7 +46,7 @@ project-add:
 
 project-commit:
   cmd.run:
-    - name: git -C {{ code_dir }} commit -m "Automated commit"
+    - name: git -C {{ code_dir }} commit -m "{{ commit_message }}"
     - require:
         - cmd: project-add
 
