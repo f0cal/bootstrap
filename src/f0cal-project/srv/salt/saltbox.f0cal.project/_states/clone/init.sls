@@ -1,5 +1,5 @@
-{% set allow_unclean = pillar['cli']['allow_unclean'] %}
 {% set https_user = pillar['cli']['https_user'] %}
+{% set https_pass = pillar['cli']['https_pass'] %}
 
 {% import "_macros/project/project_yaml.jinja" as Project with context %}
 {% set project = Project.from_env() | load_yaml %}
@@ -8,6 +8,7 @@
 {% set name = repo.name %}
 {% set path = Project.abspath(name) %}
 {% set branch = repo.branch %}
+{% set rev = repo.rev %}
 
 {{ url }}:
   git.cloned:
@@ -18,15 +19,8 @@
 {% if https_user %}
     - https_user: {{ https_user }}
 {% endif %}
-    - unless:
-        - ls {{ path }}
-
-{% if not allow_unclean %}
-repo-{{ name }}-is-porcelain--before:
-  cmd.run:
-    - name: test -z "$(git status --porcelain)"
-    - cwd: {{ path }}
+{% if https_pass %}
+    - https_pass: {{ https_pass }}
 {% endif %}
-
 
 {% endfor %}

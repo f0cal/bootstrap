@@ -73,7 +73,12 @@ formulas:
         type: "__import__('os').path.abspath"
       - name: ["-u", "--git-url"]
       - name: ["--https-user"]
+      - name: ["--https-pass"]
+        action: store_const
+        const: "__import__('getpass').getpass('git password?')"
       - name: ["--allow-unclean"]
+        default: False
+        action: store_true
 
   - name: git-cmd
     descr: "Walks on project.yml and runs 'git {cmd}' on all repos"
@@ -130,3 +135,5 @@ formulas:
     args:
       - name: code_dir
         type: "__import__('os').path.abspath"
+      - name: ['-m', '--message']
+        required: True
