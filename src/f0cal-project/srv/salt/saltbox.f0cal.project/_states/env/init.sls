@@ -1,7 +1,7 @@
 {% import "_macros/project/project_yaml.jinja" as Project with context %}
 {% set project = Project.from_env() | load_yaml %}
 
-{% set python_exe = salt['pillar.get']("cli:python", "/usr/bin/python3.7") %}
+{% set python_exe = salt['pillar.get']("cli:python", "/usr/bin/python3") %}
 
 {% set project = Project.reduce(project, "envs", pillar["cli"]["env"]) | load_yaml %}
 
@@ -17,7 +17,8 @@
     - mode: 777
     - contents: |
         #! /bin/bash
-        {{ python_exe }} -m venv $@
+        PREFIX=$(python -c "print(__import__('sys').base_exec_prefix)")
+        ${PREFIX}/bin/python3.7 -m venv $@
 
 {{ env_path }}:
   virtualenv.managed:
