@@ -8,7 +8,7 @@ formulas:
       master: False
       minion: False
     template: |
-      salt-call
+      salt-call \
         --local \
         --retcode-passthrough \
         state.sls _orch.does_not_exist_on_purpose \
@@ -25,7 +25,7 @@ formulas:
       master: False
       minion: False
     template: |
-      salt-call
+      salt-call \
         --local \
         --retcode-passthrough \
         state.sls _orch.all \
@@ -43,7 +43,7 @@ formulas:
       master: False
       minion: False
     template: |
-      salt-call
+      salt-call \
         --local \
         --retcode-passthrough \
         state.sls _states.project \
@@ -61,7 +61,7 @@ formulas:
       master: False
       minion: False
     template: |
-      salt-call
+      salt-call \
         --local \
         --retcode-passthrough \
         state.sls _states.clone \
@@ -84,7 +84,7 @@ formulas:
       master: False
       minion: False
     template: |
-      salt-call
+      salt-call \
         --local \
         --retcode-passthrough \
         state.sls _states.git \
@@ -104,7 +104,7 @@ formulas:
       master: False
       minion: False
     template: |
-      salt-call
+      salt-call \
         --local \
         --retcode-passthrough \
         state.sls _states.env \
@@ -124,8 +124,9 @@ formulas:
       master: False
       minion: False
     template: |
-      salt-call
+      salt-call \
         --local \
+        --retcode-passthrough \
         state.sls _states.push \
         saltenv={{ saltbox.formula.saltenv }} \
         pillar='{{ {"cli": saltbox.cli} | tojson() }}'
