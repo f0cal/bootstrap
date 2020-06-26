@@ -79,7 +79,7 @@ formulas:
         type: "lambda _pass: __import__('getpass').getpass('git password?') if _pass == '-' else _pass"
 
   - name: git-cmd
-    descr: "Walks on project.yml and runs 'git {cmd}' on all repos"
+    descr: "Walks on project.yml and runs 'git {git_args}' on all repos"
     config:
       master: False
       minion: False
