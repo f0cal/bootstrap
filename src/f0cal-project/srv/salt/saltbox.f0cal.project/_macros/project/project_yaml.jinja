@@ -20,38 +20,13 @@
 {% endmacro %}
 
 {% macro abspath(path) %}
+  {%- if path.startswith("/") -%}
+  {{- path -}}
+  {%- else -%}
   {%- set code_dir = pillar["cli"]["code_dir"] -%}
   {{- "%s/%s" | format(code_dir, path) -}}
+  {%- endif -%}
 {% endmacro %}
-
-{# {% macro foo() %} #}
-{#   {% set eggs = [] %} #}
-{#   {% for env in image.envs %} #}
-{#     {% set _env = project.envs | selectattr("name", "equalto", env.name) | first %} #}
-{#     {% do eggs.extend(_env.eggs) %} #}
-{#   {% endfor %} #}
-{#   {% do image.update({'eggs': eggs}) %} #}
-{#   {% set repos = [] %} #}
-{#   {% for egg in image.eggs %} #}
-{#     {% set _egg = project.eggs | selectattr("name", "equalto", egg.name) | first %} #}
-{#     {% do repos.extend([{'name': _egg.repo}]) %} #}
-{#   {% endfor %} #}
-{#   {% do image.update({'repos': repos}) %} #}
-{#   {% do image.update({'envs_default': project.envs_default}) %} #}
-{#   {% do image.update({'repos_default': project.repos_default}) %} #}
-{#   {{ image | yaml(False) }} #}
-{# {% endmacro %} #}
-
-{# def _reduce2(blob, field, names): #}
-{#     if isinstance(names, str): #}
-{#         names = [names] #}
-{#     blob[field] = [d for d in blob[field] if d['name'] in names] #}
-{#     subfield = LOOKUP.get(field, None) #}
-{#     if subfield is None: #}
-{#         return #}
-{#     subd = sum([d[subfield] for d in blob[field]], []) #}
-{#     subnames = subd #}
-{#     _reduce2(blob, subfield, subnames) #}
 
 {% set LOOKUP = {"images": "envs", "envs": "eggs", "eggs": "repos"} %}
 {% macro _reduce(blob, field, names) %}
