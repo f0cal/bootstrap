@@ -8,6 +8,9 @@
 {% for env in Project.with_defaults(project, "envs") | load_yaml %}
 
 {% set env_path = Project.abspath(env.path)  %}
+{% if not pillar['cli']['path_override'] is none %}
+{% set env_path = pillar['cli']['path_override'] %}
+{% endif %}
 {% set build_dir = Project.abspath(Project.build_dir(env.name, slspath)) %}
 {% set pip_exe = "%s/bin/pip" | format(env_path) %}
 
