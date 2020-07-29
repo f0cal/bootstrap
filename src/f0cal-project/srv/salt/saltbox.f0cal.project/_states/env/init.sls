@@ -52,7 +52,7 @@
 
 pip_upgrade:
   cmd.run:
-    - name: {{ pip_exe }} install --upgrade pip wheel setuptools
+    - name: {{ pip_exe }} install --upgrade pip==20.1.1 wheel setuptools
     - cwd: {{ project.code_dir }}
     - require:
         - virtualenv: {{ env_path }}
