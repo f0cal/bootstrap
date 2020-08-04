@@ -11,15 +11,18 @@
 {% set rev = repo.rev %}
 
 {{ url }}:
-  git.cloned:
+  git.latest:
     - target: {{ path }}
 {% if branch %}
     - branch: {{ branch }}
 {% endif %}
-{% if https_user %}
+{% if rev %}
+    - branch: {{ rev }}
+{% endif %}
+{% if https_user is not none%}
     - https_user: {{ https_user }}
 {% endif %}
-{% if https_pass %}
+{% if https_pass is not none %}
     - https_pass: {{ https_pass }}
 {% endif %}
 
