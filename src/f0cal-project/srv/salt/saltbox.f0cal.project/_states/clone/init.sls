@@ -11,13 +11,15 @@
 {% set rev = repo.rev %}
 
 {{ url }}:
+{% if rev %}
+  git.detached:
+    - rev: {{ rev }}
+{% else %}
   git.latest:
+    - branch: {{ branch }}
+  {% endif %}
     - target: {{ path }}
 {% if branch %}
-    - branch: {{ branch }}
-{% endif %}
-{% if rev %}
-    - branch: {{ rev }}
 {% endif %}
 {% if https_user is not none%}
     - https_user: {{ https_user }}
@@ -25,5 +27,6 @@
 {% if https_pass is not none %}
     - https_pass: {{ https_pass }}
 {% endif %}
+
 
 {% endfor %}
