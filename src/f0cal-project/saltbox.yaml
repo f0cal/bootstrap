@@ -141,6 +141,6 @@ formulas:
       - name: ["--https-pass"]
         default: None
         type: "lambda _pass: __import__('getpass').getpass('git password?') if _pass == '-' else _pass"
-      - name: ['-l', '--latest']
+      - name: ['--latest']
         action: "store_true"
         default: False
