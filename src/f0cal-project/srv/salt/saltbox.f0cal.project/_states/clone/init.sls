@@ -10,8 +10,12 @@
 {% set path = Project.abspath(name) %}
 {% set branch = repo.branch %}
 {% set rev = repo.rev %}
-{% if not salt['file.directory_exists' ](path) %}
+
 {{ url }}:
+# IF directory is present take no action but must still have state otherwise command may fail
+{% if  salt['file.directory_exists' ](path) %}
+  test.nop: []
+{% else %}
 {% if not latest %}
   git.detached:
     - rev: {{ rev }}
@@ -27,6 +31,5 @@
     - https_pass: {{ https_pass }}
 {% endif %}
 {% endif %}
-
 
 {% endfor %}
