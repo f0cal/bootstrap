@@ -1,5 +1,6 @@
 {% set https_user = pillar['cli']['https_user'] %}
 {% set https_pass = pillar['cli']['https_pass'] %}
+{% set latest = pillar['cli']['latest'] %}
 
 {% import "_macros/project/project_yaml.jinja" as Project with context %}
 {% set project = Project.from_env() | load_yaml %}
@@ -11,16 +12,24 @@
 {% set rev = repo.rev %}
 
 {{ url }}:
-  git.cloned:
-    - target: {{ path }}
-{% if branch %}
+# IF directory is present take no action but must still have state otherwise command may fail
+{% if  salt['file.directory_exists' ](path) %}
+  test.nop: []
+{% else %}
+{% if not latest %}
+  git.detached:
+    - rev: {{ rev }}
+{% else %}
+  git.latest:
     - branch: {{ branch }}
 {% endif %}
-{% if https_user %}
+    - target: {{ path }}
+{% if https_user is not none %}
     - https_user: {{ https_user }}
 {% endif %}
-{% if https_pass %}
+{% if https_pass is not none %}
     - https_pass: {{ https_pass }}
+{% endif %}
 {% endif %}
 
 {% endfor %}
