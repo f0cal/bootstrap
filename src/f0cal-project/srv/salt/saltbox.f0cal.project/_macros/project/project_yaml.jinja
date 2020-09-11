@@ -21,7 +21,11 @@
 
 {% macro abspath(path) %}
   {%- set code_dir = pillar["cli"]["code_dir"] -%}
-  {{- "%s/%s" | format(code_dir, path) -}}
+  {% if path.startswith("/") %}
+    {{- path -}}
+  {% else %}
+    {{- "%s/%s" | format(code_dir, path) -}}
+  {% endif %}
 {% endmacro %}
 
 {# {% macro foo() %} #}
