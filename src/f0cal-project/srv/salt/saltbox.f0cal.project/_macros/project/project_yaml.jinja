@@ -16,16 +16,16 @@
 {% endmacro %}
 
 {% macro build_dir(sls_path, key) %}
-  {{- "_cache/%s/%s" | format(sls_path, key) -}}
+  {{- "cache/%s/%s" | format(sls_path, key) -}}
 {% endmacro %}
 
 {% macro abspath(path) %}
   {%- set code_dir = pillar["cli"]["code_dir"] -%}
-  {% if path.startswith("/") %}
+  {%- if path.startswith("/") -%}
     {{- path -}}
-  {% else %}
+  {%- else -%}
     {{- "%s/%s" | format(code_dir, path) -}}
-  {% endif %}
+  {%- endif -%}
 {% endmacro %}
 
 {# {% macro foo() %} #}
