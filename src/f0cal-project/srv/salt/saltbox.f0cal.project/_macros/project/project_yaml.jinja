@@ -75,7 +75,7 @@
 
 {% macro with_defaults(blob, field) %}
   {%- set field_values = blob[field] -%}
-  {%- set default = blob["%s_default"|format(field)] -%}
+  {%- set default = blob["with_defaults|%s|"|format(field)] -%}
   {%- set new_values = [] -%}
   {%- for subblob in field_values -%}
     {%- set default_copy = default.copy() -%}
