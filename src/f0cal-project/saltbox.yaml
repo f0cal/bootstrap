@@ -120,6 +120,8 @@ formulas:
       - name: ["-e", "--env"]
         default: dev
       - name: ["-p", "--project-yaml"]
+      - name: ["--path-override"]
+        default: null
 
   - name: git-push
     descr: "Push all branches; update project.yml with commit hashes; push project.yml"
