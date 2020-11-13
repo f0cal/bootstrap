@@ -80,6 +80,9 @@ formulas:
       - name: ['-l', '--latest']
         action: "store_true"
         default: False
+      - name: ["--shallow"]
+        action: "store_true"
+        default: False
 
   - name: git-cmd
     descr: "Walks on project.yml and runs 'git {cmd}' on all repos"
