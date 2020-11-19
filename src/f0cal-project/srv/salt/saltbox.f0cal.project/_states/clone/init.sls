@@ -1,6 +1,7 @@
 {% set https_user = pillar['cli']['https_user'] %}
 {% set https_pass = pillar['cli']['https_pass'] %}
 {% set latest = pillar['cli']['latest'] %}
+{% set shallow = pillar['cli']['shallow'] %}
 
 {% import "_macros/project/project_yaml.jinja" as Project with context %}
 {% set project = Project.from_env() | load_yaml %}
@@ -16,12 +17,19 @@
 {% if  salt['file.directory_exists' ](path) %}
   test.nop: []
 {% else %}
-{% if not latest %}
-  git.detached:
-    - rev: {{ rev }}
-{% else %}
+{% if latest %}
   git.latest:
     - branch: {{ branch }}
+{% elif rev == 'latest' %}
+  git.latest:
+    - branch: {{ branch }}
+    - rev: {{ branch }}
+{% if shallow %}
+    - depth: 1
+{% endif %}
+{% else %}
+  git.detached:
+    - rev: {{ rev }}
 {% endif %}
     - target: {{ path }}
 {% if https_user is not none %}
@@ -31,5 +39,4 @@
     - https_pass: {{ https_pass }}
 {% endif %}
 {% endif %}
-
 {% endfor %}
