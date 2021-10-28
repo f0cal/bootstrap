@@ -1,0 +1,6 @@
+make-like:
+
+  define:
+
+    bootstrap/python.editable:
+      cmd: pip install ./
